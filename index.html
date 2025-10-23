@@ -138,12 +138,14 @@
 </main>
 
 <footer>
-  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). S D G H J L ; and Q,W,E… / number row for sharps.</p>
+  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). Upper row & numbers for sharps.</p>
 </footer>
 
 <script>
 (() => {
-  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F','G','G#','A','A#','B'];
+  NOTE_NAMES[6]='F#'; // fix accidental display
+
   const BASE_MIDI = 60; // C4
 
   // Physical-key mapping (layout-safe). label shown on keys.
@@ -317,10 +319,10 @@
     let x = 0;
     for (let i=0;i<count;i++){
       const midi = startMidi + i;
-      const noteInOct = midi % 12;
-      if ([1,3,6,8,10].includes(noteInOct)) continue; // skip blacks here
+      const n = midi % 12;
+      if ([1,3,6,8,10].includes(n)) continue; // skip blacks here
 
-      const noteName = NOTE_NAMES[noteInOct] + Math.floor(midi/12 - 1);
+      const noteName = NOTE_NAMES[n] + Math.floor(midi/12 - 1);
       const w = document.createElement('div');
       w.className = 'key white'; w.dataset.midi = midi;
       const letter = labelForMidi(midi);
@@ -334,30 +336,28 @@
       w.addEventListener('touchstart', start, {passive:false});
       w.addEventListener('touchend', end);
 
-      w.style.left = x+'px'; // not required visually
+      w.style.left = x+'px';
       keysEl.appendChild(w);
       whitePos.set(midi, x);
       x += W;
     }
 
-    // helper: given black note in octave, which left white does it sit after?
-    const leftWhiteForBlack = {1:0, 3:2, 6:5, 8:7, 10:9}; // C#,D#,F#,G#,A# anchor to C,D,F,G,A
+    const leftWhiteForBlack = {1:0, 3:2, 6:5, 8:7, 10:9}; // C#,D#,F#,G#,A# anchors
 
     // 2) lay out blacks between whites
     for (let i=0;i<count;i++){
       const midi = startMidi + i;
-      const noteInOct = midi % 12;
-      if (![1,3,6,8,10].includes(noteInOct)) continue;
+      const n = midi % 12;
+      if (![1,3,6,8,10].includes(n)) continue;
 
       const octaveStart = startMidi + Math.floor((midi - startMidi)/12)*12;
-      const leftWhiteMidi = octaveStart + leftWhiteForBlack[noteInOct];
-
-      if (!whitePos.has(leftWhiteMidi)) continue; // edge of range, skip
+      const leftWhiteMidi = octaveStart + leftWhiteForBlack[n];
+      if (!whitePos.has(leftWhiteMidi)) continue; // edge of range
 
       const leftX = whitePos.get(leftWhiteMidi);
       const bx = leftX + Math.round(W*0.66) - Math.round(B/2);
 
-      const noteName = NOTE_NAMES[noteInOct] + Math.floor(midi/12 - 1);
+      const noteName = NOTE_NAMES[n] + Math.floor(midi/12 - 1);
       const b = document.createElement('div');
       b.className = 'key black'; b.dataset.midi = midi;
       const letter = labelForMidi(midi);
@@ -394,7 +394,7 @@
     return null;
   }
 
-  // ---------- KEYBOARD HANDLERS (layout-safe, no stuck notes) ----------
+  // ---------- KEYBOARD HANDLERS ----------
   const down = new Set();
 
   window.addEventListener('keydown', e => {
