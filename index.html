@@ -254,34 +254,40 @@
 
   const keysEl = document.getElementById('keys');
   function buildKeyboard(){
-    const startMidi = BASE_MIDI;
-    const count = 25;
-    for (let i=0;i<count;i++){
-      const midi = startMidi + i;
-      const name = NOTE_NAMES[midi%12] + Math.floor(midi/12-1);
-      const isBlack = NOTE_NAMES[midi%12].includes('#');
-      const holder = document.createElement('div');
-      holder.className = 'key ' + (isBlack?'black':'white');
-      holder.dataset.midi = midi;
-      holder.innerHTML = `<kbd>${name}</kbd>`;
-      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
-      const end = () => release('mouse:'+midi);
-      holder.addEventListener('mousedown', start);
-      holder.addEventListener('mouseup', end);
-      holder.addEventListener('mouseleave', end);
-      holder.addEventListener('touchstart', start, {passive:false});
-      holder.addEventListener('touchend', end);
-      if (!isBlack) {
-        const wrap = document.createElement('div');
-        wrap.style.position='relative';
-        wrap.style.margin='0 2px';
-        wrap.appendChild(holder);
-        keysEl.appendChild(wrap);
-      } else {
-        keysEl.lastElementChild.appendChild(holder);
-      }
-    }
+  // build ~2 octaves visually in one horizontal row
+  const startMidi = BASE_MIDI; // C4
+  const count = 25; // total keys
+  keysEl.style.display = 'flex';
+  keysEl.style.flexWrap = 'nowrap';
+  keysEl.style.overflowX = 'auto';
+  keysEl.innerHTML = ''; // clear any existing keys
+
+  for (let i = 0; i < count; i++) {
+    const midi = startMidi + i;
+    const noteName = NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
+    const isBlack = NOTE_NAMES[midi % 12].includes('#');
+    const holder = document.createElement('div');
+    holder.className = 'key ' + (isBlack ? 'black' : 'white');
+    holder.dataset.midi = midi;
+
+    // find the keyboard key letter mapped to this midi (if any)
+    const mapping = KEYMAP.find(x => BASE_MIDI + x.n === midi);
+    const letter = mapping ? mapping.k : '';
+
+    holder.innerHTML = `<kbd>${noteName}<br><strong style="font-size:13px;color:${isBlack?'#fafafa':'#333'}">${letter}</strong></kbd>`;
+
+    // click/touch play handlers
+    const start = ev => { ev.preventDefault(); play(midi, 'mouse:' + midi); };
+    const end = () => release('mouse:' + midi);
+    holder.addEventListener('mousedown', start);
+    holder.addEventListener('mouseup', end);
+    holder.addEventListener('mouseleave', end);
+    holder.addEventListener('touchstart', start, { passive: false });
+    holder.addEventListener('touchend', end);
+
+    keysEl.appendChild(holder);
   }
+}
   function markKey(tag, on){
     const el = findKeyEl(tag);
     if (el){ el.classList.toggle('playing', !!on); }
