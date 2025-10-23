@@ -143,9 +143,8 @@
 
 <script>
 (() => {
-  // Fixed: correct accidental names directly (no post-fix)
-  const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-
+  // simple ASCII note names
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const BASE_MIDI = 60; // C4
 
   // Physical-key mapping (layout-safe). label shown on keys.
@@ -174,10 +173,10 @@
   // ---------- AUDIO ENGINE ----------
   let audio, master, outGain, filter, chorusDelay, chorusLFO, chorusDepthGain, tremLFO, tremDepthGain, bellows, mediaDest, mediaRec;
   let sustain = false;
-  let held = new Map(); // tag -> voice
-  let sustained = new Set();
-  let drones = { sa:false, pa:false };
-  let settings = { root:0, transpose:0, brightness:2000, chorus:0.35, tremAmt:0.08, volume:0.8 };
+  const held = new Map(); // tag -> voice
+  const sustained = new Set();
+  const drones = { sa:false, pa:false };
+  const settings = { root:0, transpose:0, brightness:2000, chorus:0.35, tremAmt:0.08, volume:0.8 };
   function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
 
   function ensureAudio() {
@@ -217,23 +216,44 @@
 
     startBellows();
 
-    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
-    try { mediaRec = new MediaRecorder(mediaDest.stream, mime ? {mimeType:mime} : undefined); } catch { mediaRec = new MediaRecorder(mediaDest.stream); }
+    // ---------- SAFE MediaRecorder setup ----------
+    let mime = '';
+    if (typeof MediaRecorder !== 'undefined') {
+      if (MediaRecorder.isTypeSupported?.('audio/webm;codecs=opus')) {
+        mime = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported?.('audio/webm')) {
+        mime = 'audio/webm';
+      }
+      try {
+        mediaRec = new MediaRecorder(mediaDest.stream, mime ? { mimeType: mime } : undefined);
+      } catch (e) {
+        try { mediaRec = new MediaRecorder(mediaDest.stream); } catch { mediaRec = null; }
+      }
+    } else {
+      mediaRec = null; // not supported
+    }
+
     mediaRecChunks = [];
-    mediaRec.ondataavailable = e => { if (e.data.size) mediaRecChunks.push(e.data); };
-    mediaRec.onstop = () => {
-      const blob = new Blob(mediaRecChunks, { type: mime || 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `harmonium-${Date.now()}.webm`;
-      a.textContent = 'Download recording';
-      const status = document.getElementById('recStatus');
-      status.innerHTML = '';
-      status.appendChild(a);
-      mediaRecChunks = [];
-    };
+    if (mediaRec) {
+      mediaRec.ondataavailable = e => { if (e.data.size) mediaRecChunks.push(e.data); };
+      mediaRec.onstop = () => {
+        const blob = new Blob(mediaRecChunks, { type: mime || 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `harmonium-${Date.now()}.webm`;
+        a.textContent = 'Download recording';
+        const status = document.getElementById('recStatus');
+        status.innerHTML = '';
+        status.appendChild(a);
+        mediaRecChunks = [];
+      };
+    } else {
+      // Disable record UI gracefully
+      const btn = document.getElementById('recordBtn');
+      btn.disabled = true;
+      btn.textContent = '⏺️ Record (not supported)';
+      document.getElementById('recStatus').textContent = 'Recording not supported in this browser.';
+    }
   }
 
   function startBellows(){
@@ -469,7 +489,7 @@
   link('volume', el => { settings.volume = +el.value; if (outGain) outGain.gain.value = settings.volume; });
 
   // Recording buttons
-  let mediaRecChunks = []; // <— Fixed: only declare chunks here
+  let mediaRecChunks = []; // keep only here — DO NOT redeclare mediaRec
   document.getElementById('recordBtn').addEventListener('click', () => {
     ensureAudio();
     if (!mediaRec) return;
@@ -494,5 +514,3 @@
   document.body.addEventListener('click', ensureAudio, { once: true });
 })();
 </script>
-</body>
-</html>
