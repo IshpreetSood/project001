@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Harmonium — play with your laptop keyboard</title>
+<meta name="description" content="A free, single-file, browser-based harmonium you can host anywhere (e.g., static.app). Uses only Web Audio API." />
+<style>
+  :root { --panel:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; --accent2:#a78bfa; }
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial;background:linear-gradient(180deg,#05060a,#0a0f1a);color:var(--ink)}
+  header{padding:18px 20px;border-bottom:1px solid #1f2937;background:rgba(10,15,26,.6);backdrop-filter:saturate(120%) blur(6px);position:sticky;top:0;z-index:9}
+  header h1{margin:0;font-size:20px;letter-spacing:.3px}
+  main{max-width:1000px;margin:26px auto;padding:0 16px}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:14px;padding:16px}
+  .controls{flex: 1 1 320px}
+  .keyboard{flex: 2 1 520px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;justify-content:center}
+  .key{position:relative;user-select:none;touch-action:none}
+  .white{width:42px;height:180px;background:#fafafa;color:#111;border:1px solid #cbd5e1;border-bottom-width:4px;border-radius:6px;box-shadow:inset 0 -4px 0 #e5e7eb}
+  .black{width:28px;height:110px;background:#111;color:#fafafa;border:1px solid #111;border-radius:6px;position:absolute;left:28px;top:0;z-index:2;box-shadow:inset 0 -6px 0 #000}
+  .key kbd{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11px;color:#555}
+  .playing{outline:3px solid var(--accent);filter:drop-shadow(0 0 10px rgba(34,211,238,.6))}
+  .toggle{display:inline-flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid #334155;border-radius:10px;background:#0b1220;cursor:pointer}
+  .toggle input{accent-color:var(--accent)}
+  label{color:var(--muted);font-size:13px}
+  select, input[type="range"], button{width:100%;margin-top:6px;background:#0b1220;border:1px solid #334155;color:#e5e7eb;padding:10px;border-radius:10px}
+  button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#0b0b0b;font-weight:700}
+  .fineprint{color:var(--muted);font-size:12px;margin-top:10px}
+  .pill{display:inline-block;border:1px solid #334155;padding:6px 10px;border-radius:999px;font-size:12px;margin-right:8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .badges{margin-top:8px}
+  .status{font-variant-numeric:tabular-nums}
+  footer{max-width:1000px;margin:20px auto 40px;padding:0 16px;color:#94a3b8}
+  @media (max-width:680px){
+    .white{width:34px;height:150px}
+    .black{width:22px;height:92px;left:22px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎹 Browser Harmonium — free, single-file</h1>
+</header>
+<main>
+  <div class="row">
+    <section class="card controls">
+      <div class="grid2">
+        <div>
+          <label>Root (Sa / tonic)</label>
+          <select id="root">
+            <option value="0">C</option><option value="1">C♯/D♭</option><option value="2">D</option>
+            <option value="3">D♯/E♭</option><option value="4">E</option><option value="5">F</option>
+            <option value="6">F♯/G♭</option><option value="7">G</option><option value="8">G♯/A♭</option>
+            <option value="9">A</option><option value="10">A♯/B♭</option><option value="11">B</option>
+          </select>
+        </div>
+        <div>
+          <label>Transpose (semitones)</label>
+          <input id="transpose" type="range" min="-12" max="12" value="0" />
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Brilliance (filter)</label>
+          <input id="brightness" type="range" min="200" max="6000" value="2000" />
+        </div>
+        <div>
+          <label>Chorus depth</label>
+          <input id="chorus" type="range" min="0" max="1" step="0.01" value="0.35" />
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Tremolo (amount)</label>
+          <input id="tremAmt" type="range" min="0" max="1" step="0.01" value="0.08" />
+        </div>
+        <div>
+          <label>Volume</label>
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" />
+        </div>
+      </div>
+
+      <p class="badges">
+        <span class="pill">Click the page, then play</span>
+        <span class="pill">Space = bellows</span>
+        <span class="pill">Shift = sustain</span>
+        <span class="pill">1 → Sa drone</span>
+        <span class="pill">2 → Pa drone</span>
+      </p>
+
+      <div class="grid2" style="margin-top:8px">
+        <button id="recordBtn">⏺️ Record (WEBM)</button>
+        <button id="clearRecBtn">🗑️ Reset</button>
+      </div>
+      <p id="recStatus" class="fineprint status">Not recording.</p>
+      <p class="fineprint">License: MIT. Fully client-side, no tracking. Host anywhere (static.app, GitHub Pages, Netlify, Vercel).</p>
+    </section>
+
+    <section class="card keyboard" id="keys"></section>
+  </div>
+</main>
+
+<footer>
+  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). S D G H J L ; (and 2,3,5,6,7) for sharps.</p>
+</footer>
+
+<script>
+(() => {
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const KEYMAP = [
+    { k:'Z', n:0 },{ k:'S', n:1 },{ k:'X', n:2 },{ k:'D', n:3 },{ k:'C', n:4 },
+    { k:'V', n:5 },{ k:'G', n:6 },{ k:'B', n:7 },{ k:'H', n:8 },{ k:'N', n:9 },
+    { k:'J', n:10 },{ k:'M', n:11 },{ k:',', n:12 },{ k:'L', n:13 },{ k:'.', n:14 },{ k:';', n:15 },{ k:'/', n:16 },
+    { k:'Q', n:12 },{ k:'2', n:13 },{ k:'W', n:14 },{ k:'3', n:15 },{ k:'E', n:16 },{ k:'R', n:17 },
+    { k:'5', n:18 },{ k:'T', n:19 },{ k:'6', n:20 },{ k:'Y', n:21 },{ k:'7', n:22 },{ k:'U', n:23 },{ k:'I', n:24 },
+  ];
+  const BASE_MIDI = 60; // C4
+  let audio, master, outGain, filter, chorusDelay, chorusLFO, chorusDepthGain, tremLFO, tremDepthGain, bellows, mediaDest, mediaRec;
+  let sustain = false;
+  let held = new Map(); // key -> voice
+  let sustained = new Set();
+  let drones = { sa:false, pa:false };
+  let settings = { root:0, transpose:0, brightness:2000, chorus:0.35, tremAmt:0.08, volume:0.8 };
+
+  function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  function ensureAudio() {
+    if (audio) return;
+    audio = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+
+    bellows = audio.createGain(); bellows.gain.value = 0.6;
+    filter = audio.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value = settings.brightness; filter.Q.value = 0.7;
+
+    chorusDelay = audio.createDelay(0.03); chorusDelay.delayTime.value = 0.014;
+    chorusLFO = audio.createOscillator(); chorusLFO.frequency.value = 0.9;
+    chorusDepthGain = audio.createGain(); chorusDepthGain.gain.value = settings.chorus * 0.006;
+    chorusLFO.connect(chorusDepthGain).connect(chorusDelay.delayTime); chorusLFO.start();
+
+    tremLFO = audio.createOscillator(); tremLFO.frequency.value = 5.2;
+    tremDepthGain = audio.createGain(); tremDepthGain.gain.value = settings.tremAmt;
+    tremLFO.connect(tremDepthGain); tremLFO.start();
+
+    const tremMult = audio.createGain();
+    tremDepthGain.connect(tremMult.gain);
+    tremMult.gain.value = 1 - settings.tremAmt;
+
+    outGain = audio.createGain(); outGain.gain.value = settings.volume;
+    mediaDest = audio.createMediaStreamDestination();
+
+    const mix = audio.createGain(); mix.gain.value = 1;
+    const chorusMix = audio.createGain(); chorusMix.gain.value = 0.8;
+
+    master = audio.createGain(); master.gain.value = 1;
+    master.connect(filter);
+    filter.connect(mix);
+    filter.connect(chorusDelay).connect(chorusMix);
+    chorusMix.connect(mix);
+
+    mix.connect(tremMult).connect(bellows).connect(outGain).connect(audio.destination);
+    outGain.connect(mediaDest);
+
+    startBellows();
+
+    // Recorder with best-available mime
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
+    try { mediaRec = new MediaRecorder(mediaDest.stream, mime ? {mimeType:mime} : undefined); } catch { mediaRec = new MediaRecorder(mediaDest.stream); }
+    mediaRecChunks = [];
+    mediaRec.ondataavailable = e => { if (e.data.size) mediaRecChunks.push(e.data); };
+    mediaRec.onstop = () => {
+      const blob = new Blob(mediaRecChunks, { type: mime || 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `harmonium-${Date.now()}.webm`;
+      a.textContent = 'Download recording';
+      const status = document.getElementById('recStatus');
+      status.innerHTML = '';
+      status.appendChild(a);
+      mediaRecChunks = [];
+    };
+  }
+
+  function startBellows(){
+    let pumping = false;
+    let pressure = 0.7;
+    let last = performance.now();
+    function tick(now){
+      const dt = Math.min(0.05, (now - last)/1000); last = now;
+      const target = pumping ? 1.0 : 0.55;
+      pressure += (target - pressure) * (pumping ? 4*dt : 0.8*dt);
+      if (bellows) bellows.gain.value = pressure;
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    window.addEventListener('keydown', e => { if (e.code==='Space'){ pumping=true; e.preventDefault(); }});
+    window.addEventListener('keyup',   e => { if (e.code==='Space'){ pumping=false; e.preventDefault(); }});
+  }
+
+  function makeVoice(freq){
+    const g = audio.createGain(); g.gain.value = 0.0;
+    const o1 = audio.createOscillator(); o1.type='sawtooth'; o1.frequency.value = freq * 0.998;
+    const o2 = audio.createOscillator(); o2.type='sawtooth'; o2.frequency.value = freq * 1.003;
+    const o3 = audio.createOscillator(); o3.type='square';   o3.frequency.value = freq * 2;
+    const o3g = audio.createGain(); o3g.gain.value = 0.08;
+
+    const bp1 = audio.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value = 780;  bp1.Q.value=0.8;
+    const bp2 = audio.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value = 1800; bp2.Q.value=1.0;
+
+    o1.connect(g); o2.connect(g); o3.connect(o3g).connect(g);
+    g.connect(bp1).connect(bp2).connect(master);
+
+    o1.start(); o2.start(); o3.start();
+
+    const now = audio.currentTime;
+    g.gain.cancelScheduledValues(now);
+    g.gain.setTargetAtTime(1.0, now, 0.02);
+
+    return {
+      node:g,
+      stop(release=0.04){
+        const t = audio.currentTime;
+        g.gain.setTargetAtTime(0, t, Math.max(0.01, release));
+        setTimeout(() => { try{ o1.stop(); o2.stop(); o3.stop(); g.disconnect(); }catch{} }, 400);
+      }
+    };
+  }
+
+  function play(midi, tag){
+    ensureAudio();
+    const transposed = midi + settings.transpose + settings.root;
+    const freq = mtof(transposed);
+    const v = makeVoice(freq);
+    held.set(tag, v);
+    markKey(tag, true);
+  }
+
+  function release(tag){
+    const v = held.get(tag);
+    if (!v) return;
+    if (sustain) { sustained.add(tag); return; }
+    v.stop();
+    held.delete(tag);
+    markKey(tag, false);
+  }
+
+  function allNotesOff(){
+    held.forEach(v => v.stop());
+    held.clear();
+    sustained.clear();
+    document.querySelectorAll('.key').forEach(el=>el.classList.remove('playing'));
+  }
+
+  const keysEl = document.getElementById('keys');
+  function buildKeyboard(){
+    const startMidi = BASE_MIDI;
+    const count = 25;
+    for (let i=0;i<count;i++){
+      const midi = startMidi + i;
+      const name = NOTE_NAMES[midi%12] + Math.floor(midi/12-1);
+      const isBlack = NOTE_NAMES[midi%12].includes('#');
+      const holder = document.createElement('div');
+      holder.className = 'key ' + (isBlack?'black':'white');
+      holder.dataset.midi = midi;
+      holder.innerHTML = `<kbd>${name}</kbd>`;
+      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
+      const end = () => release('mouse:'+midi);
+      holder.addEventListener('mousedown', start);
+      holder.addEventListener('mouseup', end);
+      holder.addEventListener('mouseleave', end);
+      holder.addEventListener('touchstart', start, {passive:false});
+      holder.addEventListener('touchend', end);
+      if (!isBlack) {
+        const wrap = document.createElement('div');
+        wrap.style.position='relative';
+        wrap.style.margin='0 2px';
+        wrap.appendChild(holder);
+        keysEl.appendChild(wrap);
+      } else {
+        keysEl.lastElementChild.appendChild(holder);
+      }
+    }
+  }
+  function markKey(tag, on){
+    const el = findKeyEl(tag);
+    if (el){ el.classList.toggle('playing', !!on); }
+  }
+  function findKeyEl(tag){
+    if (tag.startsWith('mouse:')) {
+      const midi = +tag.split(':')[1];
+      return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
+    } else if (tag.startsWith('key:')) {
+      const obj = KEYMAP.find(x => x.k === tag.slice(4));
+      if (!obj) return null;
+      const midi = BASE_MIDI + obj.n;
+      return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
+    }
+    return null;
+  }
+  function midiForKey(code){
+    const letter = code.toUpperCase();
+    const map = KEYMAP.find(x => x.k === letter);
+    if (!map) return null;
+    return BASE_MIDI + map.n;
+  }
+
+  const down = new Set();
+  window.addEventListener('keydown', e => {
+    if (e.repeat) return;
+    if (e.key === 'Shift') { sustain = true; e.preventDefault(); return; }
+    if (e.key === '1') { toggleDrone('sa'); return; }
+    if (e.key === '2') { toggleDrone('pa'); return; }
+    const midi = midiForKey(e.key);
+    if (midi !== null) {
+      down.add(e.key);
+      play(midi, 'key:'+e.key.toUpperCase());
+      e.preventDefault();
+    }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'Shift') {
+      sustain = false;
+      sustained.forEach(tag => { const v = held.get(tag); if (v){ v.stop(); held.delete(tag); markKey(tag,false); } });
+      sustained.clear();
+      return;
+    }
+    const midi = midiForKey(e.key);
+    if (midi !== null) {
+      down.delete(e.key);
+      release('key:'+e.key.toUpperCase());
+    }
+  });
+
+  function playDrone(which, on){
+    ensureAudio();
+    const rootMidi = BASE_MIDI + settings.root;
+    const midi = which==='sa' ? rootMidi : rootMidi + 7;
+    const freq = mtof(midi);
+    if (on){
+      const v = makeVoice(freq);
+      v.node.gain.setTargetAtTime(0.7, audio.currentTime, 0.05);
+      held.set('drone:'+which, v);
+    } else {
+      const v = held.get('drone:'+which);
+      if (v){ v.stop(0.2); held.delete('drone:'+which); }
+    }
+  }
+  function toggleDrone(which){
+    drones[which] = !drones[which];
+    playDrone(which, drones[which]);
+  }
+
+  function link(id, handler){
+    const el = document.getElementById(id);
+    handler(el);
+    el.addEventListener('input', () => handler(el));
+  }
+  link('root', el => { settings.root = +el.value; });
+  link('transpose', el => { settings.transpose = +el.value; });
+  link('brightness', el => { settings.brightness = +el.value; if (filter) filter.frequency.value = settings.brightness; });
+  link('chorus', el => { settings.chorus = +el.value; if (chorusDepthGain) chorusDepthGain.gain.value = settings.chorus * 0.006; });
+  link('tremAmt', el => {
+    settings.tremAmt = +el.value;
+    if (tremDepthGain) tremDepthGain.gain.value = settings.tremAmt;
+    if (outGain) outGain.gain.value = settings.volume * (0.95 + 0.05*(1-settings.tremAmt));
+  });
+  link('volume', el => { settings.volume = +el.value; if (outGain) outGain.gain.value = settings.volume; });
+
+  document.getElementById('recordBtn').addEventListener('click', () => {
+    ensureAudio();
+    if (!mediaRec) return;
+    if (mediaRec.state === 'recording') {
+      mediaRec.stop();
+      document.getElementById('recordBtn').textContent = '⏺️ Record (WEBM)';
+      document.getElementById('recStatus').textContent = 'Processing…';
+    } else {
+      mediaRecChunks = [];
+      try { mediaRec.start(); } catch {}
+      document.getElementById('recordBtn').textContent = '⏹️ Stop';
+      document.getElementById('recStatus').textContent = 'Recording… play with keys!';
+    }
+  });
+  document.getElementById('clearRecBtn').addEventListener('click', () => {
+    document.getElementById('recStatus').textContent = 'Not recording.';
+  });
+
+  buildKeyboard();
+  window.addEventListener('pointerdown', ensureAudio, { once:true });
+  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) allNotesOff(); });
+})();
+</script>
+</body>
+</html>
