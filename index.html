@@ -115,13 +115,36 @@
 <script>
 (() => {
   const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const KEYMAP = [
-    { k:'Z', n:0 },{ k:'S', n:1 },{ k:'X', n:2 },{ k:'D', n:3 },{ k:'C', n:4 },
-    { k:'V', n:5 },{ k:'G', n:6 },{ k:'B', n:7 },{ k:'H', n:8 },{ k:'N', n:9 },
-    { k:'J', n:10 },{ k:'M', n:11 },{ k:',', n:12 },{ k:'L', n:13 },{ k:'.', n:14 },{ k:';', n:15 },{ k:'/', n:16 },
-    { k:'Q', n:12 },{ k:'2', n:13 },{ k:'W', n:14 },{ k:'3', n:15 },{ k:'E', n:16 },{ k:'R', n:17 },
-    { k:'5', n:18 },{ k:'T', n:19 },{ k:'6', n:20 },{ k:'Y', n:21 },{ k:'7', n:22 },{ k:'U', n:23 },{ k:'I', n:24 },
-  ];
+  // Use physical key codes (layout-safe). "label" is what we print on the key.
+const KEYMAP = [
+  { code:'KeyZ', label:'Z', n:0 },  { code:'KeyS', label:'S', n:1 },
+  { code:'KeyX', label:'X', n:2 },  { code:'KeyD', label:'D', n:3 },
+  { code:'KeyC', label:'C', n:4 },  { code:'KeyV', label:'V', n:5 },
+  { code:'KeyG', label:'G', n:6 },  { code:'KeyB', label:'B', n:7 },
+  { code:'KeyH', label:'H', n:8 },  { code:'KeyN', label:'N', n:9 },
+  { code:'KeyJ', label:'J', n:10 }, { code:'KeyM', label:'M', n:11 },
+  { code:'Comma', label:',', n:12 },{ code:'KeyL', label:'L', n:13 },
+  { code:'Period', label:'.', n:14 },{ code:'Semicolon', label:';', n:15 },
+  { code:'Slash', label:'/', n:16 },
+
+  // top row for sharps / higher notes
+  { code:'KeyQ', label:'Q', n:12 }, { code:'Digit2', label:'2', n:13 },
+  { code:'KeyW', label:'W', n:14 }, { code:'Digit3', label:'3', n:15 },
+  { code:'KeyE', label:'E', n:16 }, { code:'KeyR', label:'R', n:17 },
+  { code:'Digit5', label:'5', n:18 },{ code:'KeyT', label:'T', n:19 },
+  { code:'Digit6', label:'6', n:20 },{ code:'KeyY', label:'Y', n:21 },
+  { code:'Digit7', label:'7', n:22 },{ code:'KeyU', label:'U', n:23 },
+  { code:'KeyI', label:'I', n:24 },
+];
+
+function midiForCode(code){
+  const m = KEYMAP.find(k => k.code === code);
+  return m ? BASE_MIDI + m.n : null;
+}
+function labelForMidi(midi){
+  const m = KEYMAP.find(k => (BASE_MIDI + k.n) === midi);
+  return m ? m.label : '';
+}
   const BASE_MIDI = 60; // C4
   let audio, master, outGain, filter, chorusDelay, chorusLFO, chorusDepthGain, tremLFO, tremDepthGain, bellows, mediaDest, mediaRec;
   let sustain = false;
