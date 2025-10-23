@@ -261,30 +261,37 @@
   }
 
   const keysEl = document.getElementById('keys');
-  function buildKeyboard(){
-  // build ~2 octaves visually in one horizontal row
+  function buildKeyboard() {
+  // Make a full single-row keyboard with black keys on top of whites
   const startMidi = BASE_MIDI; // C4
-  const count = 25; // total keys
-  keysEl.style.display = 'flex';
-  keysEl.style.flexWrap = 'nowrap';
+  const count = 25; // about two octaves
+  keysEl.style.position = 'relative';
+  keysEl.style.display = 'inline-block';
+  keysEl.style.whiteSpace = 'nowrap';
   keysEl.style.overflowX = 'auto';
-  keysEl.innerHTML = ''; // clear any existing keys
+  keysEl.innerHTML = ''; // clear old keys
+
+  const whiteWidth = 50;
+  const blackWidth = 32;
+  const whiteKeys = [];
+  const blackKeys = [];
 
   for (let i = 0; i < count; i++) {
     const midi = startMidi + i;
     const noteName = NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
     const isBlack = NOTE_NAMES[midi % 12].includes('#');
-    const holder = document.createElement('div');
-    holder.className = 'key ' + (isBlack ? 'black' : 'white');
-    holder.dataset.midi = midi;
-
-    // find the keyboard key letter mapped to this midi (if any)
     const mapping = KEYMAP.find(x => BASE_MIDI + x.n === midi);
     const letter = mapping ? mapping.k : '';
 
-    holder.innerHTML = `<kbd>${noteName}<br><strong style="font-size:13px;color:${isBlack?'#fafafa':'#333'}">${letter}</strong></kbd>`;
+    const holder = document.createElement('div');
+    holder.className = 'key ' + (isBlack ? 'black' : 'white');
+    holder.dataset.midi = midi;
+    holder.innerHTML = `
+      <kbd style="position:absolute;bottom:5px;width:100%;text-align:center;font-size:12px;">
+        ${noteName}<br><strong style="font-size:13px;color:${isBlack ? '#fff' : '#111'}">${letter}</strong>
+      </kbd>
+    `;
 
-    // click/touch play handlers
     const start = ev => { ev.preventDefault(); play(midi, 'mouse:' + midi); };
     const end = () => release('mouse:' + midi);
     holder.addEventListener('mousedown', start);
@@ -293,8 +300,39 @@
     holder.addEventListener('touchstart', start, { passive: false });
     holder.addEventListener('touchend', end);
 
-    keysEl.appendChild(holder);
+    if (isBlack) {
+      blackKeys.push({ el: holder, midi });
+    } else {
+      whiteKeys.push({ el: holder, midi });
+    }
   }
+
+  // Lay out white keys in one row
+  whiteKeys.forEach((k, i) => {
+    k.el.style.position = 'relative';
+    k.el.style.display = 'inline-block';
+    k.el.style.width = whiteWidth + 'px';
+    k.el.style.height = '180px';
+    keysEl.appendChild(k.el);
+  });
+
+  // Add black keys positioned over whites
+  blackKeys.forEach(k => {
+    const index = NOTE_NAMES.indexOf(k.el.dataset.note);
+  });
+
+  const blackOffsets = { 1: 0.7, 3: 1.7, 6: 3.7, 8: 4.7, 10: 5.7 };
+  blackKeys.forEach(k => {
+    const noteIndex = (k.midi - startMidi) % 12;
+    if (blackOffsets[noteIndex % 12] !== undefined) {
+      k.el.style.position = 'absolute';
+      k.el.style.left = blackOffsets[noteIndex % 12] * whiteWidth + 'px';
+      k.el.style.top = '0px';
+      k.el.style.width = blackWidth + 'px';
+      k.el.style.height = '110px';
+      keysEl.appendChild(k.el);
+    }
+  });
 }
   function markKey(tag, on){
     const el = findKeyEl(tag);
