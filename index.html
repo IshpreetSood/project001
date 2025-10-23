@@ -7,27 +7,54 @@
 <meta name="description" content="A free, single-file, browser-based harmonium you can host anywhere (e.g., static.app). Uses only Web Audio API." />
 <style>
   :root { --panel:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; --accent2:#a78bfa; }
-  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial;background:linear-gradient(180deg,#05060a,#0a0f1a);color:var(--ink)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial;background:linear-gradient(180deg,#05060a,#0a0f1a);color:var(--ink)}
   header{padding:18px 20px;border-bottom:1px solid #1f2937;background:rgba(10,15,26,.6);backdrop-filter:saturate(120%) blur(6px);position:sticky;top:0;z-index:9}
   header h1{margin:0;font-size:20px;letter-spacing:.3px}
   main{max-width:1000px;margin:26px auto;padding:0 16px}
   .row{display:flex;gap:16px;flex-wrap:wrap}
   .card{background:var(--card);border:1px solid #1f2937;border-radius:14px;padding:16px}
   .controls{flex: 1 1 320px}
-  .keyboard {
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-  align-items: flex-end;
-  justify-content: flex-start;
-  overflow-x: auto;
-  padding-bottom: 12px;
-}
+
+  /* one-row keyboard container */
+  .keyboard{
+    position:relative;
+    display:inline-block;
+    overflow-x:auto;
+    white-space:nowrap;
+    background:#0b1220;
+    border-radius:12px;
+    padding:12px;
+    flex: 2 1 520px;
+  }
+
+  /* keys */
   .key{position:relative;user-select:none;touch-action:none}
-  .white{width:42px;height:180px;background:#fafafa;color:#111;border:1px solid #cbd5e1;border-bottom-width:4px;border-radius:6px;box-shadow:inset 0 -4px 0 #e5e7eb}
-  .black{width:28px;height:110px;background:#111;color:#fafafa;border:1px solid #111;border-radius:6px;position:absolute;left:28px;top:0;z-index:2;box-shadow:inset 0 -6px 0 #000}
-  .key kbd{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11px;color:#555}
+  .white{
+    display:inline-block;
+    position:relative;
+    width:50px;            /* change for bigger/smaller keys */
+    height:180px;
+    background:#fafafa;color:#111;
+    border:1px solid #cbd5e1;border-bottom-width:4px;border-radius:6px;
+    box-shadow:inset 0 -4px 0 #e5e7eb;
+    margin-right:-1px;     /* tight seam */
+    vertical-align:bottom;
+  }
+  .black{
+    position:absolute;
+    width:32px; height:110px;
+    background:#111;color:#fafafa;
+    border:1px solid #000;border-radius:6px;z-index:2;
+    box-shadow:inset 0 -6px 0 #000;
+  }
+
+  .key kbd{
+    position:absolute;bottom:6px;left:0;right:0;
+    text-align:center;font-size:12px;color:#555;pointer-events:none;user-select:none
+  }
   .playing{outline:3px solid var(--accent);filter:drop-shadow(0 0 10px rgba(34,211,238,.6))}
+
   .toggle{display:inline-flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid #334155;border-radius:10px;background:#0b1220;cursor:pointer}
   .toggle input{accent-color:var(--accent)}
   label{color:var(--muted);font-size:13px}
@@ -39,9 +66,10 @@
   .badges{margin-top:8px}
   .status{font-variant-numeric:tabular-nums}
   footer{max-width:1000px;margin:20px auto 40px;padding:0 16px;color:#94a3b8}
+
   @media (max-width:680px){
-    .white{width:34px;height:150px}
-    .black{width:22px;height:92px;left:22px}
+    .white{width:40px;height:160px}
+    .black{width:26px;height:95px}
   }
 </style>
 </head>
@@ -100,6 +128,7 @@
         <button id="recordBtn">⏺️ Record (WEBM)</button>
         <button id="clearRecBtn">🗑️ Reset</button>
       </div>
+      <button id="panicBtn" style="margin-top:8px">🆘 Panic (All Notes Off)</button>
       <p id="recStatus" class="fineprint status">Not recording.</p>
       <p class="fineprint">License: MIT. Fully client-side, no tracking. Host anywhere (static.app, GitHub Pages, Netlify, Vercel).</p>
     </section>
@@ -109,50 +138,44 @@
 </main>
 
 <footer>
-  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). S D G H J L ; (and 2,3,5,6,7) for sharps.</p>
+  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). S D G H J L ; and Q,W,E… / number row for sharps.</p>
 </footer>
 
 <script>
 (() => {
   const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  // Use physical key codes (layout-safe). "label" is what we print on the key.
-const KEYMAP = [
-  { code:'KeyZ', label:'Z', n:0 },  { code:'KeyS', label:'S', n:1 },
-  { code:'KeyX', label:'X', n:2 },  { code:'KeyD', label:'D', n:3 },
-  { code:'KeyC', label:'C', n:4 },  { code:'KeyV', label:'V', n:5 },
-  { code:'KeyG', label:'G', n:6 },  { code:'KeyB', label:'B', n:7 },
-  { code:'KeyH', label:'H', n:8 },  { code:'KeyN', label:'N', n:9 },
-  { code:'KeyJ', label:'J', n:10 }, { code:'KeyM', label:'M', n:11 },
-  { code:'Comma', label:',', n:12 },{ code:'KeyL', label:'L', n:13 },
-  { code:'Period', label:'.', n:14 },{ code:'Semicolon', label:';', n:15 },
-  { code:'Slash', label:'/', n:16 },
-
-  // top row for sharps / higher notes
-  { code:'KeyQ', label:'Q', n:12 }, { code:'Digit2', label:'2', n:13 },
-  { code:'KeyW', label:'W', n:14 }, { code:'Digit3', label:'3', n:15 },
-  { code:'KeyE', label:'E', n:16 }, { code:'KeyR', label:'R', n:17 },
-  { code:'Digit5', label:'5', n:18 },{ code:'KeyT', label:'T', n:19 },
-  { code:'Digit6', label:'6', n:20 },{ code:'KeyY', label:'Y', n:21 },
-  { code:'Digit7', label:'7', n:22 },{ code:'KeyU', label:'U', n:23 },
-  { code:'KeyI', label:'I', n:24 },
-];
-
-function midiForCode(code){
-  const m = KEYMAP.find(k => k.code === code);
-  return m ? BASE_MIDI + m.n : null;
-}
-function labelForMidi(midi){
-  const m = KEYMAP.find(k => (BASE_MIDI + k.n) === midi);
-  return m ? m.label : '';
-}
   const BASE_MIDI = 60; // C4
+
+  // Physical-key mapping (layout-safe). label shown on keys.
+  const KEYMAP = [
+    { code:'KeyZ', label:'Z', n:0 },  { code:'KeyS', label:'S', n:1 },
+    { code:'KeyX', label:'X', n:2 },  { code:'KeyD', label:'D', n:3 },
+    { code:'KeyC', label:'C', n:4 },  { code:'KeyV', label:'V', n:5 },
+    { code:'KeyG', label:'G', n:6 },  { code:'KeyB', label:'B', n:7 },
+    { code:'KeyH', label:'H', n:8 },  { code:'KeyN', label:'N', n:9 },
+    { code:'KeyJ', label:'J', n:10 }, { code:'KeyM', label:'M', n:11 },
+    { code:'Comma', label:',', n:12 },{ code:'KeyL', label:'L', n:13 },
+    { code:'Period', label:'.', n:14 },{ code:'Semicolon', label:';', n:15 },
+    { code:'Slash', label:'/', n:16 },
+    // upper row for sharps / higher notes
+    { code:'KeyQ', label:'Q', n:12 }, { code:'Digit2', label:'2', n:13 },
+    { code:'KeyW', label:'W', n:14 }, { code:'Digit3', label:'3', n:15 },
+    { code:'KeyE', label:'E', n:16 }, { code:'KeyR', label:'R', n:17 },
+    { code:'Digit5', label:'5', n:18 },{ code:'KeyT', label:'T', n:19 },
+    { code:'Digit6', label:'6', n:20 },{ code:'KeyY', label:'Y', n:21 },
+    { code:'Digit7', label:'7', n:22 },{ code:'KeyU', label:'U', n:23 },
+    { code:'KeyI', label:'I', n:24 },
+  ];
+  const keyByCode = code => KEYMAP.find(k => k.code === code) || null;
+  const labelForMidi = midi => (KEYMAP.find(k => BASE_MIDI + k.n === midi)?.label || '');
+
+  // ---------- AUDIO ENGINE ----------
   let audio, master, outGain, filter, chorusDelay, chorusLFO, chorusDepthGain, tremLFO, tremDepthGain, bellows, mediaDest, mediaRec;
   let sustain = false;
-  let held = new Map(); // key -> voice
+  let held = new Map(); // tag -> voice
   let sustained = new Set();
   let drones = { sa:false, pa:false };
   let settings = { root:0, transpose:0, brightness:2000, chorus:0.35, tremAmt:0.08, volume:0.8 };
-
   function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
 
   function ensureAudio() {
@@ -192,7 +215,6 @@ function labelForMidi(midi){
 
     startBellows();
 
-    // Recorder with best-available mime
     const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
       ? 'audio/webm;codecs=opus'
       : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
@@ -224,7 +246,6 @@ function labelForMidi(midi){
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
-
     window.addEventListener('keydown', e => { if (e.code==='Space'){ pumping=true; e.preventDefault(); }});
     window.addEventListener('keyup',   e => { if (e.code==='Space'){ pumping=false; e.preventDefault(); }});
   }
@@ -235,7 +256,6 @@ function labelForMidi(midi){
     const o2 = audio.createOscillator(); o2.type='sawtooth'; o2.frequency.value = freq * 1.003;
     const o3 = audio.createOscillator(); o3.type='square';   o3.frequency.value = freq * 2;
     const o3g = audio.createGain(); o3g.gain.value = 0.08;
-
     const bp1 = audio.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value = 780;  bp1.Q.value=0.8;
     const bp2 = audio.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value = 1800; bp2.Q.value=1.0;
 
@@ -243,10 +263,7 @@ function labelForMidi(midi){
     g.connect(bp1).connect(bp2).connect(master);
 
     o1.start(); o2.start(); o3.start();
-
-    const now = audio.currentTime;
-    g.gain.cancelScheduledValues(now);
-    g.gain.setTargetAtTime(1.0, now, 0.02);
+    g.gain.setTargetAtTime(1.0, audio.currentTime, 0.02);
 
     return {
       node:g,
@@ -266,7 +283,6 @@ function labelForMidi(midi){
     held.set(tag, v);
     markKey(tag, true);
   }
-
   function release(tag){
     const v = held.get(tag);
     if (!v) return;
@@ -275,7 +291,6 @@ function labelForMidi(midi){
     held.delete(tag);
     markKey(tag, false);
   }
-
   function allNotesOff(){
     held.forEach(v => v.stop());
     held.clear();
@@ -283,80 +298,84 @@ function labelForMidi(midi){
     document.querySelectorAll('.key').forEach(el=>el.classList.remove('playing'));
   }
 
+  // ---------- BUILD ONE-LINE KEYBOARD ----------
   const keysEl = document.getElementById('keys');
-  function buildKeyboard() {
-  // Make a full single-row keyboard with black keys on top of whites
-  const startMidi = BASE_MIDI; // C4
-  const count = 25; // about two octaves
-  keysEl.style.position = 'relative';
-  keysEl.style.display = 'inline-block';
-  keysEl.style.whiteSpace = 'nowrap';
-  keysEl.style.overflowX = 'auto';
-  keysEl.innerHTML = ''; // clear old keys
+  function buildKeyboard(){
+    const startMidi = BASE_MIDI;   // C4
+    const count = 25;              // ~2 octaves
+    const W = 50;                  // white width
+    const B = 32;                  // black width
 
-  const whiteWidth = 50;
-  const blackWidth = 32;
-  const whiteKeys = [];
-  const blackKeys = [];
+    keysEl.innerHTML = '';
+    keysEl.style.position = 'relative';
+    keysEl.style.display = 'inline-block';
+    keysEl.style.whiteSpace = 'nowrap';
+    keysEl.style.overflowX = 'auto';
 
-  for (let i = 0; i < count; i++) {
-    const midi = startMidi + i;
-    const noteName = NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
-    const isBlack = NOTE_NAMES[midi % 12].includes('#');
-    const mapping = KEYMAP.find(x => BASE_MIDI + x.n === midi);
-    const letter = mapping ? mapping.k : '';
+    const whitePos = new Map();
+    // 1) lay out whites
+    let x = 0;
+    for (let i=0;i<count;i++){
+      const midi = startMidi + i;
+      const noteInOct = midi % 12;
+      if ([1,3,6,8,10].includes(noteInOct)) continue; // skip blacks here
 
-    const holder = document.createElement('div');
-    holder.className = 'key ' + (isBlack ? 'black' : 'white');
-    holder.dataset.midi = midi;
-    holder.innerHTML = `
-      <kbd style="position:absolute;bottom:5px;width:100%;text-align:center;font-size:12px;">
-        ${noteName}<br><strong style="font-size:13px;color:${isBlack ? '#fff' : '#111'}">${letter}</strong>
-      </kbd>
-    `;
+      const noteName = NOTE_NAMES[noteInOct] + Math.floor(midi/12 - 1);
+      const w = document.createElement('div');
+      w.className = 'key white'; w.dataset.midi = midi;
+      const letter = labelForMidi(midi);
+      w.innerHTML = `<kbd>${noteName}<br><strong style="font-size:13px;color:#111">${letter}</strong></kbd>`;
 
-    const start = ev => { ev.preventDefault(); play(midi, 'mouse:' + midi); };
-    const end = () => release('mouse:' + midi);
-    holder.addEventListener('mousedown', start);
-    holder.addEventListener('mouseup', end);
-    holder.addEventListener('mouseleave', end);
-    holder.addEventListener('touchstart', start, { passive: false });
-    holder.addEventListener('touchend', end);
+      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
+      const end   = () => release('mouse:'+midi);
+      w.addEventListener('mousedown', start);
+      w.addEventListener('mouseup', end);
+      w.addEventListener('mouseleave', end);
+      w.addEventListener('touchstart', start, {passive:false});
+      w.addEventListener('touchend', end);
 
-    if (isBlack) {
-      blackKeys.push({ el: holder, midi });
-    } else {
-      whiteKeys.push({ el: holder, midi });
+      w.style.left = x+'px'; // not required visually
+      keysEl.appendChild(w);
+      whitePos.set(midi, x);
+      x += W;
+    }
+
+    // helper: given black note in octave, which left white does it sit after?
+    const leftWhiteForBlack = {1:0, 3:2, 6:5, 8:7, 10:9}; // C#,D#,F#,G#,A# anchor to C,D,F,G,A
+
+    // 2) lay out blacks between whites
+    for (let i=0;i<count;i++){
+      const midi = startMidi + i;
+      const noteInOct = midi % 12;
+      if (![1,3,6,8,10].includes(noteInOct)) continue;
+
+      const octaveStart = startMidi + Math.floor((midi - startMidi)/12)*12;
+      const leftWhiteMidi = octaveStart + leftWhiteForBlack[noteInOct];
+
+      if (!whitePos.has(leftWhiteMidi)) continue; // edge of range, skip
+
+      const leftX = whitePos.get(leftWhiteMidi);
+      const bx = leftX + Math.round(W*0.66) - Math.round(B/2);
+
+      const noteName = NOTE_NAMES[noteInOct] + Math.floor(midi/12 - 1);
+      const b = document.createElement('div');
+      b.className = 'key black'; b.dataset.midi = midi;
+      const letter = labelForMidi(midi);
+      b.innerHTML = `<kbd style="color:#fff">${noteName}<br><strong style="font-size:13px;color:#fff">${letter}</strong></kbd>`;
+      b.style.left = bx+'px'; b.style.top = '0px';
+
+      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
+      const end   = () => release('mouse:'+midi);
+      b.addEventListener('mousedown', start);
+      b.addEventListener('mouseup', end);
+      b.addEventListener('mouseleave', end);
+      b.addEventListener('touchstart', start, {passive:false});
+      b.addEventListener('touchend', end);
+
+      keysEl.appendChild(b);
     }
   }
 
-  // Lay out white keys in one row
-  whiteKeys.forEach((k, i) => {
-    k.el.style.position = 'relative';
-    k.el.style.display = 'inline-block';
-    k.el.style.width = whiteWidth + 'px';
-    k.el.style.height = '180px';
-    keysEl.appendChild(k.el);
-  });
-
-  // Add black keys positioned over whites
-  blackKeys.forEach(k => {
-    const index = NOTE_NAMES.indexOf(k.el.dataset.note);
-  });
-
-  const blackOffsets = { 1: 0.7, 3: 1.7, 6: 3.7, 8: 4.7, 10: 5.7 };
-  blackKeys.forEach(k => {
-    const noteIndex = (k.midi - startMidi) % 12;
-    if (blackOffsets[noteIndex % 12] !== undefined) {
-      k.el.style.position = 'absolute';
-      k.el.style.left = blackOffsets[noteIndex % 12] * whiteWidth + 'px';
-      k.el.style.top = '0px';
-      k.el.style.width = blackWidth + 'px';
-      k.el.style.height = '110px';
-      keysEl.appendChild(k.el);
-    }
-  });
-}
   function markKey(tag, on){
     const el = findKeyEl(tag);
     if (el){ el.classList.toggle('playing', !!on); }
@@ -366,33 +385,35 @@ function labelForMidi(midi){
       const midi = +tag.split(':')[1];
       return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
     } else if (tag.startsWith('key:')) {
-      const obj = KEYMAP.find(x => x.k === tag.slice(4));
-      if (!obj) return null;
-      const midi = BASE_MIDI + obj.n;
+      const code = tag.slice(4);
+      const map = keyByCode(code);
+      if (!map) return null;
+      const midi = BASE_MIDI + map.n;
       return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
     }
     return null;
   }
-  function midiForKey(code){
-    const letter = code.toUpperCase();
-    const map = KEYMAP.find(x => x.k === letter);
-    if (!map) return null;
-    return BASE_MIDI + map.n;
-  }
 
+  // ---------- KEYBOARD HANDLERS (layout-safe, no stuck notes) ----------
   const down = new Set();
+
   window.addEventListener('keydown', e => {
+    if (e.code === 'Escape') { allNotesOff(); return; } // panic via ESC
     if (e.repeat) return;
+
     if (e.key === 'Shift') { sustain = true; e.preventDefault(); return; }
-    if (e.key === '1') { toggleDrone('sa'); return; }
-    if (e.key === '2') { toggleDrone('pa'); return; }
-    const midi = midiForKey(e.key);
-    if (midi !== null) {
-      down.add(e.key);
-      play(midi, 'key:'+e.key.toUpperCase());
+    if (e.code === 'Digit1') { toggleDrone('sa'); return; }
+    if (e.code === 'Digit2') { toggleDrone('pa'); return; }
+
+    const m = keyByCode(e.code);
+    if (m) {
+      if (down.has(e.code)) return;
+      down.add(e.code);
+      play(BASE_MIDI + m.n, 'key:'+e.code);
       e.preventDefault();
     }
   });
+
   window.addEventListener('keyup', e => {
     if (e.key === 'Shift') {
       sustain = false;
@@ -400,13 +421,17 @@ function labelForMidi(midi){
       sustained.clear();
       return;
     }
-    const midi = midiForKey(e.key);
-    if (midi !== null) {
-      down.delete(e.key);
-      release('key:'+e.key.toUpperCase());
+    const m = keyByCode(e.code);
+    if (m) {
+      down.delete(e.code);
+      release('key:'+e.code);
     }
   });
 
+  window.addEventListener('blur', allNotesOff);
+  document.getElementById('panicBtn').addEventListener('click', allNotesOff);
+
+  // ---------- Drones ----------
   function playDrone(which, on){
     ensureAudio();
     const rootMidi = BASE_MIDI + settings.root;
@@ -426,6 +451,7 @@ function labelForMidi(midi){
     playDrone(which, drones[which]);
   }
 
+  // ---------- Controls ----------
   function link(id, handler){
     const el = document.getElementById(id);
     handler(el);
@@ -442,6 +468,8 @@ function labelForMidi(midi){
   });
   link('volume', el => { settings.volume = +el.value; if (outGain) outGain.gain.value = settings.volume; });
 
+  // Recording buttons
+  let mediaRec, mediaRecChunks = [];
   document.getElementById('recordBtn').addEventListener('click', () => {
     ensureAudio();
     if (!mediaRec) return;
@@ -460,9 +488,9 @@ function labelForMidi(midi){
     document.getElementById('recStatus').textContent = 'Not recording.';
   });
 
+  // Build UI and arm audio on first gesture
   buildKeyboard();
   window.addEventListener('pointerdown', ensureAudio, { once:true });
-  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) allNotesOff(); });
 })();
 </script>
 </body>
