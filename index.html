@@ -3,514 +3,352 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Harmonium — play with your laptop keyboard</title>
-<meta name="description" content="A free, single-file, browser-based harmonium you can host anywhere (e.g., static.app). Uses only Web Audio API." />
+<title>Virtual Harmonium – Laptop Keys</title>
 <style>
-  :root { --panel:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; --accent2:#a78bfa; }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial;background:linear-gradient(180deg,#05060a,#0a0f1a);color:var(--ink)}
-  header{padding:18px 20px;border-bottom:1px solid #1f2937;background:rgba(10,15,26,.6);backdrop-filter:saturate(120%) blur(6px);position:sticky;top:0;z-index:9}
-  header h1{margin:0;font-size:20px;letter-spacing:.3px}
-  main{max-width:1000px;margin:26px auto;padding:0 16px}
+  :root {
+    --bg:#0f1115; --panel:#161923; --ink:#e8ecf1; --muted:#9aa4b2; --accent:#46d3a7;
+    --warn:#fdbc5b; --key:#23283a; --key-on:#3a4161; --white:#e6e6e6; --black:#1a1a1a;
+  }
+  *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
+  body{margin:0;background:linear-gradient(180deg,#0c0f14,#10131a);color:var(--ink);}
+  header{padding:18px 22px;border-bottom:1px solid #222838;background:#0e1219;position:sticky;top:0;z-index:2}
+  h1{margin:0;font-weight:700;font-size:18px;letter-spacing:.3px}
+  .wrap{max-width:980px;margin:18px auto;padding:0 16px 40px}
   .row{display:flex;gap:16px;flex-wrap:wrap}
-  .card{background:var(--card);border:1px solid #1f2937;border-radius:14px;padding:16px}
-  .controls{flex: 1 1 320px}
-
-  /* one-row keyboard container */
-  .keyboard{
-    position:relative;
-    display:inline-block;
-    overflow-x:auto;
-    white-space:nowrap;
-    background:#0b1220;
-    border-radius:12px;
-    padding:12px;
-    flex: 2 1 520px;
+  .card{background:var(--panel);border:1px solid #23283a;border-radius:12px;padding:14px 16px;flex:1}
+  .kbd{display:inline-block;border:1px solid #2d3350;border-bottom-width:3px;border-radius:8px;padding:6px 8px;margin:0 2px;background:var(--key);color:#cfd6e6;min-width:26px;text-align:center;font-weight:600}
+  .kbd.on{background:var(--key-on);color:#fff;border-color:#495289}
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  button, input[type=range]{
+    -webkit-tap-highlight-color:transparent
   }
-
-  /* keys */
-  .key{position:relative;user-select:none;touch-action:none}
-  .white{
-    display:inline-block;
-    position:relative;
-    width:50px;
-    height:180px;
-    background:#fafafa;color:#111;
-    border:1px solid #cbd5e1;border-bottom-width:4px;border-radius:6px;
-    box-shadow:inset 0 -4px 0 #e5e7eb;
-    margin-right:-1px;
-    vertical-align:bottom;
+  button{
+    background:#1b2133;border:1px solid #2a324f;color:var(--ink);
+    padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer
   }
-  .black{
-    position:absolute;
-    width:32px; height:110px;
-    background:#111;color:#fafafa;
-    border:1px solid #000;border-radius:6px;z-index:2;
-    box-shadow:inset 0 -6px 0 #000;
-  }
-
-  .key kbd{
-    position:absolute;bottom:6px;left:0;right:0;
-    text-align:center;font-size:12px;color:#555;pointer-events:none;user-select:none
-  }
-  .playing{outline:3px solid var(--accent);filter:drop-shadow(0 0 10px rgba(34,211,238,.6))}
-
-  .toggle{display:inline-flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid #334155;border-radius:10px;background:#0b1220;cursor:pointer}
-  .toggle input{accent-color:var(--accent)}
-  label{color:var(--muted);font-size:13px}
-  select, input[type="range"], button{width:100%;margin-top:6px;background:#0b1220;border:1px solid #334155;color:#e5e7eb;padding:10px;border-radius:10px}
-  button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#0b0b0b;font-weight:700}
-  .fineprint{color:var(--muted);font-size:12px;margin-top:10px}
-  .pill{display:inline-block;border:1px solid #334155;padding:6px 10px;border-radius:999px;font-size:12px;margin-right:8px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .badges{margin-top:8px}
-  .status{font-variant-numeric:tabular-nums}
-  footer{max-width:1000px;margin:20px auto 40px;padding:0 16px;color:#94a3b8}
-
-  @media (max-width:680px){
-    .white{width:40px;height:160px}
-    .black{width:26px;height:95px}
-  }
+  button.toggle[aria-pressed="true"]{background:var(--accent);border-color:#7df1ce;color:#0c1413}
+  button.small{font-size:13px;padding:6px 9px}
+  label{font-size:12px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:10px}
+  .key{height:120px;border-radius:8px;position:relative;user-select:none}
+  .key.white{background:var(--white);border:1px solid #d6d6d6;color:#333}
+  .key.black{background:linear-gradient(#111,#222);height:80px;margin:0 -10px;z-index:1;border:1px solid #000;color:#eee}
+  .key span{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-weight:700;font-size:12px;opacity:.85}
+  .key.on{outline:3px solid var(--accent);box-shadow:0 0 18px rgba(70,211,167,.6) inset}
+  .meter{height:10px;background:#1b2133;border-radius:6px;overflow:hidden;border:1px solid #2a324f;margin-top:8px}
+  .meter > div{height:100%;width:0;background:linear-gradient(90deg,#46d3a7,#84f1d2)}
+  footer{opacity:.8;text-align:center;margin-top:10px;font-size:12px;color:#9aa4b2}
+  .hint{font-size:13px;color:#b9c2d1}
 </style>
 </head>
 <body>
-<header>
-  <h1>🎹 Browser Harmonium — free, single-file</h1>
-</header>
-<main>
+<header><h1>🎹 Virtual Harmonium (Laptop Keys)</h1></header>
+<div class="wrap">
   <div class="row">
-    <section class="card controls">
-      <div class="grid2">
-        <div>
-          <label>Root (Sa / tonic)</label>
-          <select id="root">
-            <option value="0">C</option><option value="1">C♯/D♭</option><option value="2">D</option>
-            <option value="3">D♯/E♭</option><option value="4">E</option><option value="5">F</option>
-            <option value="6">F♯/G♭</option><option value="7">G</option><option value="8">G♯/A♭</option>
-            <option value="9">A</option><option value="10">A♯/B♭</option><option value="11">B</option>
-          </select>
-        </div>
-        <div>
-          <label>Transpose (semitones)</label>
-          <input id="transpose" type="range" min="-12" max="12" value="0" />
-        </div>
+    <div class="card" style="flex:2">
+      <div class="controls">
+        <button id="start">Enable Audio</button>
+        <button id="octDown" class="small">[ Oct–</button>
+        <div id="octave" class="hint">Octave: 3</div>
+        <button id="octUp" class="small">] Oct+</button>
+        <button id="sustainBtn" class="toggle" aria-pressed="false">Space: Sustain</button>
+        <button id="droneBtn" class="toggle" aria-pressed="false">1: Drone (Sa + Pa)</button>
+        <button id="panicBtn" class="small" title="Stop all sound (0 key)">0: Panic</button>
       </div>
-      <div class="grid2">
-        <div>
-          <label>Brilliance (filter)</label>
-          <input id="brightness" type="range" min="200" max="6000" value="2000" />
-        </div>
-        <div>
-          <label>Chorus depth</label>
-          <input id="chorus" type="range" min="0" max="1" step="0.01" value="0.35" />
-        </div>
-      </div>
-      <div class="grid2">
-        <div>
-          <label>Tremolo (amount)</label>
-          <input id="tremAmt" type="range" min="0" max="1" step="0.01" value="0.08" />
-        </div>
-        <div>
-          <label>Volume</label>
-          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" />
-        </div>
+      <div style="margin-top:8px" class="hint">
+        Row 1: <span class="kbd">Z</span> <span class="kbd">S</span> <span class="kbd">X</span> <span class="kbd">D</span> <span class="kbd">C</span> <span class="kbd">V</span> <span class="kbd">G</span> <span class="kbd">B</span> <span class="kbd">H</span> <span class="kbd">N</span> <span class="kbd">J</span> <span class="kbd">M</span>
+        &nbsp;&nbsp; Row 2: <span class="kbd">Q</span> <span class="kbd">2</span> <span class="kbd">W</span> <span class="kbd">3</span> <span class="kbd">E</span> <span class="kbd">R</span> <span class="kbd">5</span> <span class="kbd">T</span> <span class="kbd">6</span> <span class="kbd">Y</span> <span class="kbd">7</span> <span class="kbd">U</span>
       </div>
 
-      <p class="badges">
-        <span class="pill">Click the page, then play</span>
-        <span class="pill">Space = bellows</span>
-        <span class="pill">Shift = sustain</span>
-        <span class="pill">1 → Sa drone</span>
-        <span class="pill">2 → Pa drone</span>
-      </p>
+      <div id="piano" class="grid" aria-label="keyboard"></div>
+      <div class="meter"><div id="vu"></div></div>
+      <div class="hint">Tip: Harmonium is a free-reed instrument with a steady tone. Use the “Chorus” & “Vibrato” below to taste.</div>
+    </div>
 
-      <div class="grid2" style="margin-top:8px">
-        <button id="recordBtn">⏺️ Record (WEBM)</button>
-        <button id="clearRecBtn">🗑️ Reset</button>
+    <div class="card" style="flex:1;min-width:280px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center">
+        <label>Master Volume</label><input id="gain" type="range" min="0" max="1" step="0.001" value="0.7" />
+        <label>Brightness (LPF Hz)</label><input id="lpf" type="range" min="400" max="6000" step="1" value="2600" />
+        <label>Chorus Depth</label><input id="chorusDepth" type="range" min="0" max="20" step="0.1" value="8" />
+        <label>Chorus Rate (Hz)</label><input id="chorusRate" type="range" min="0.05" max="1.5" step="0.01" value="0.35" />
+        <label>Vibrato Depth (cents)</label><input id="vibDepth" type="range" min="0" max="30" step="0.5" value="6" />
+        <label>Vibrato Rate (Hz)</label><input id="vibRate" type="range" min="3" max="9" step="0.1" value="5.8" />
+        <label>Key Click</label><input id="clickAmt" type="range" min="0" max="1" step="0.01" value="0.18" />
+        <label>Attack (ms)</label><input id="attack" type="range" min="0" max="60" step="1" value="8" />
       </div>
-      <button id="panicBtn" style="margin-top:8px">🆘 Panic (All Notes Off)</button>
-      <p id="recStatus" class="fineprint status">Not recording.</p>
-      <p class="fineprint">License: MIT. Fully client-side, no tracking. Host anywhere (static.app, GitHub Pages, Netlify, Vercel).</p>
-    </section>
-
-    <section class="card keyboard" id="keys"></section>
+    </div>
   </div>
-</main>
-
-<footer>
-  <p>Keyboard layout: Z X C V B N M , . / for white keys (starting at C4). Upper row & numbers for sharps.</p>
-</footer>
+  <footer>Made with Web Audio API. Works offline after first load.</footer>
+</div>
 
 <script>
 (() => {
-  // simple ASCII note names
-  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const BASE_MIDI = 60; // C4
+  // ---------- Audio engine ----------
+  const state = {
+    ctx: null,
+    master: null,
+    limiter: null,
+    analyser: null,
+    lpf: null,
+    sustain: false,
+    octave: 3,
+    active: new Map(), // key -> voice
+    held: new Set(),   // physical keys down
+    drones: [],
+  };
 
-  // Physical-key mapping (layout-safe). label shown on keys.
-  const KEYMAP = [
-    { code:'KeyZ', label:'Z', n:0 },  { code:'KeyS', label:'S', n:1 },
-    { code:'KeyX', label:'X', n:2 },  { code:'KeyD', label:'D', n:3 },
-    { code:'KeyC', label:'C', n:4 },  { code:'KeyV', label:'V', n:5 },
-    { code:'KeyG', label:'G', n:6 },  { code:'KeyB', label:'B', n:7 },
-    { code:'KeyH', label:'H', n:8 },  { code:'KeyN', label:'N', n:9 },
-    { code:'KeyJ', label:'J', n:10 }, { code:'KeyM', label:'M', n:11 },
-    { code:'Comma', label:',', n:12 },{ code:'KeyL', label:'L', n:13 },
-    { code:'Period', label:'.', n:14 },{ code:'Semicolon', label:';', n:15 },
-    { code:'Slash', label:'/', n:16 },
-    // upper row for sharps / higher notes
-    { code:'KeyQ', label:'Q', n:12 }, { code:'Digit2', label:'2', n:13 },
-    { code:'KeyW', label:'W', n:14 }, { code:'Digit3', label:'3', n:15 },
-    { code:'KeyE', label:'E', n:16 }, { code:'KeyR', label:'R', n:17 },
-    { code:'Digit5', label:'5', n:18 },{ code:'KeyT', label:'T', n:19 },
-    { code:'Digit6', label:'6', n:20 },{ code:'KeyY', label:'Y', n:21 },
-    { code:'Digit7', label:'7', n:22 },{ code:'KeyU', label:'U', n:23 },
-    { code:'KeyI', label:'I', n:24 },
-  ];
-  const keyByCode = code => KEYMAP.find(k => k.code === code) || null;
-  const labelForMidi = midi => (KEYMAP.find(k => BASE_MIDI + k.n === midi)?.label || '');
+  // Equal-tempered tuning; A4=440
+  function midiToFreq(m){return 440 * Math.pow(2,(m-69)/12)}
 
-  // ---------- AUDIO ENGINE ----------
-  let audio, master, outGain, filter, chorusDelay, chorusLFO, chorusDepthGain, tremLFO, tremDepthGain, bellows, mediaDest, mediaRec;
-  let sustain = false;
-  const held = new Map(); // tag -> voice
-  const sustained = new Set();
-  const drones = { sa:false, pa:false };
-  const settings = { root:0, transpose:0, brightness:2000, chorus:0.35, tremAmt:0.08, volume:0.8 };
-  function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
-
-  function ensureAudio() {
-    if (audio) return;
-    audio = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-
-    bellows = audio.createGain(); bellows.gain.value = 0.6;
-    filter = audio.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value = settings.brightness; filter.Q.value = 0.7;
-
-    chorusDelay = audio.createDelay(0.03); chorusDelay.delayTime.value = 0.014;
-    chorusLFO = audio.createOscillator(); chorusLFO.frequency.value = 0.9;
-    chorusDepthGain = audio.createGain(); chorusDepthGain.gain.value = settings.chorus * 0.006;
-    chorusLFO.connect(chorusDepthGain).connect(chorusDelay.delayTime); chorusLFO.start();
-
-    tremLFO = audio.createOscillator(); tremLFO.frequency.value = 5.2;
-    tremDepthGain = audio.createGain(); tremDepthGain.gain.value = settings.tremAmt;
-    tremLFO.connect(tremDepthGain); tremLFO.start();
-
-    const tremMult = audio.createGain();
-    tremDepthGain.connect(tremMult.gain);
-    tremMult.gain.value = 1 - settings.tremAmt;
-
-    outGain = audio.createGain(); outGain.gain.value = settings.volume;
-    mediaDest = audio.createMediaStreamDestination();
-
-    const mix = audio.createGain(); mix.gain.value = 1;
-    const chorusMix = audio.createGain(); chorusMix.gain.value = 0.8;
-
-    master = audio.createGain(); master.gain.value = 1;
-    master.connect(filter);
-    filter.connect(mix);
-    filter.connect(chorusDelay).connect(chorusMix);
-    chorusMix.connect(mix);
-
-    mix.connect(tremMult).connect(bellows).connect(outGain).connect(audio.destination);
-    outGain.connect(mediaDest);
-
-    startBellows();
-
-    // ---------- SAFE MediaRecorder setup ----------
-    let mime = '';
-    if (typeof MediaRecorder !== 'undefined') {
-      if (MediaRecorder.isTypeSupported?.('audio/webm;codecs=opus')) {
-        mime = 'audio/webm;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported?.('audio/webm')) {
-        mime = 'audio/webm';
-      }
-      try {
-        mediaRec = new MediaRecorder(mediaDest.stream, mime ? { mimeType: mime } : undefined);
-      } catch (e) {
-        try { mediaRec = new MediaRecorder(mediaDest.stream); } catch { mediaRec = null; }
-      }
-    } else {
-      mediaRec = null; // not supported
-    }
-
-    mediaRecChunks = [];
-    if (mediaRec) {
-      mediaRec.ondataavailable = e => { if (e.data.size) mediaRecChunks.push(e.data); };
-      mediaRec.onstop = () => {
-        const blob = new Blob(mediaRecChunks, { type: mime || 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `harmonium-${Date.now()}.webm`;
-        a.textContent = 'Download recording';
-        const status = document.getElementById('recStatus');
-        status.innerHTML = '';
-        status.appendChild(a);
-        mediaRecChunks = [];
-      };
-    } else {
-      // Disable record UI gracefully
-      const btn = document.getElementById('recordBtn');
-      btn.disabled = true;
-      btn.textContent = '⏺️ Record (not supported)';
-      document.getElementById('recStatus').textContent = 'Recording not supported in this browser.';
-    }
-  }
-
-  function startBellows(){
-    let pumping = false;
-    let pressure = 0.7;
-    let last = performance.now();
-    function tick(now){
-      const dt = Math.min(0.05, (now - last)/1000); last = now;
-      const target = pumping ? 1.0 : 0.55;
-      pressure += (target - pressure) * (pumping ? 4*dt : 0.8*dt);
-      if (bellows) bellows.gain.value = pressure;
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-    window.addEventListener('keydown', e => { if (e.code==='Space'){ pumping=true; e.preventDefault(); }});
-    window.addEventListener('keyup',   e => { if (e.code==='Space'){ pumping=false; e.preventDefault(); }});
-  }
-
+  // A harmonium-like voice: bandlimited brightness + gentle formant + slight detune & chorus
   function makeVoice(freq){
-    const g = audio.createGain(); g.gain.value = 0.0;
-    const o1 = audio.createOscillator(); o1.type='sawtooth'; o1.frequency.value = freq * 0.998;
-    const o2 = audio.createOscillator(); o2.type='sawtooth'; o2.frequency.value = freq * 1.003;
-    const o3 = audio.createOscillator(); o3.type='square';   o3.frequency.value = freq * 2;
-    const o3g = audio.createGain(); o3g.gain.value = 0.08;
-    const bp1 = audio.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value = 780;  bp1.Q.value=0.8;
-    const bp2 = audio.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value = 1800; bp2.Q.value=1.0;
+    const ctx = state.ctx;
 
-    o1.connect(g); o2.connect(g); o3.connect(o3g).connect(g);
-    g.connect(bp1).connect(bp2).connect(master);
+    // Gain envelope
+    const amp = ctx.createGain(); amp.gain.value = 0;
+    // Gentle low-pass as brightness control
+    const lpf = ctx.createBiquadFilter(); lpf.type = "lowpass"; lpf.frequency.value = Number(document.getElementById('lpf').value); lpf.Q.value = 0.7;
+    // Mild resonance to mimic reed body
+    const formant = ctx.createBiquadFilter(); formant.type="bandpass"; formant.frequency.value = freq*2; formant.Q.value=4;
 
-    o1.start(); o2.start(); o3.start();
-    g.gain.setTargetAtTime(1.0, audio.currentTime, 0.02);
+    // Primary sources: pulses (band-limited)
+    const osc1 = ctx.createOscillator(); osc1.type="sawtooth"; osc1.frequency.value=freq*0.999;
+    const osc2 = ctx.createOscillator(); osc2.type="square";   osc2.frequency.value=freq*1.001;
+
+    // Tiny detune for chorusing
+    const chorusLFO = ctx.createOscillator(); chorusLFO.frequency.value = Number(document.getElementById('chorusRate').value);
+    const chorusDepth = ctx.createGain(); chorusDepth.gain.value = Number(document.getElementById('chorusDepth').value); // cents
+    // Convert cents -> Hz modulation roughly: Δf ≈ f*(2^(c/1200)-1) ~ f * ln(2)*c/1200 for small c
+    const centsToHz = c => freq*(Math.pow(2,c/1200)-1);
+    const depthHz = ctx.createGain(); depthHz.gain.value = centsToHz(1); // scale to 1 cent, then multiply
+    chorusLFO.connect(chorusDepth).connect(depthHz);
+    depthHz.connect(osc1.frequency);
+    depthHz.connect(osc2.frequency);
+
+    // Vibrato (musical)
+    const vibLFO = ctx.createOscillator(); vibLFO.frequency.value = Number(document.getElementById('vibRate').value);
+    const vibDepth = ctx.createGain(); vibDepth.gain.value = centsToHz(Number(document.getElementById('vibDepth').value));
+    vibLFO.connect(vibDepth);
+    vibDepth.connect(osc1.frequency);
+    vibDepth.connect(osc2.frequency);
+
+    // Key click (short noise burst)
+    const clickAmt = Number(document.getElementById('clickAmt').value);
+    let clickSrc = null, clickGain = null;
+    if (clickAmt > 0){
+      const buffer = ctx.createBuffer(1, ctx.sampleRate*0.03, ctx.sampleRate);
+      const d = buffer.getChannelData(0);
+      for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*Math.exp(-i/(d.length*0.55)); }
+      clickSrc = ctx.createBufferSource(); clickSrc.buffer = buffer;
+      clickGain = ctx.createGain(); clickGain.gain.value = clickAmt;
+      clickSrc.connect(clickGain).connect(lpf);
+    }
+
+    // Wire up chain
+    osc1.connect(formant);
+    osc2.connect(formant);
+    formant.connect(lpf);
+    lpf.connect(amp);
+    if(clickSrc) clickSrc.start();
+
+    osc1.start(); osc2.start(); chorusLFO.start(); vibLFO.start();
+
+    // Envelope
+    const now = ctx.currentTime;
+    const atk = Number(document.getElementById('attack').value)/1000;
+    amp.gain.cancelScheduledValues(now);
+    amp.gain.setValueAtTime(0, now);
+    amp.gain.linearRampToValueAtTime(1, now+atk);
+
+    // Output to master
+    amp.connect(state.master);
+
+    const stop = (releaseMs=20) => {
+      const t = ctx.currentTime;
+      amp.gain.cancelScheduledValues(t);
+      amp.gain.setTargetAtTime(0, t, releaseMs/1000);
+      setTimeout(()=>{
+        try{
+          osc1.stop(); osc2.stop(); chorusLFO.stop(); vibLFO.stop();
+          amp.disconnect(); lpf.disconnect(); formant.disconnect();
+        }catch(e){}
+      }, releaseMs+120);
+    };
 
     return {
-      node:g,
-      stop(release=0.04){
-        const t = audio.currentTime;
-        g.gain.setTargetAtTime(0, t, Math.max(0.01, release));
-        setTimeout(() => { try{ o1.stop(); o2.stop(); o3.stop(); g.disconnect(); }catch{} }, 400);
+      freq, amp, lpf, stop,
+      setBrightness(v){ lpf.frequency.setTargetAtTime(v, ctx.currentTime, 0.02); },
+      setVib(depthCents, rateHz){
+        vibLFO.frequency.setValueAtTime(rateHz, ctx.currentTime);
+        vibDepth.gain.setValueAtTime(freq*(Math.pow(2,depthCents/1200)-1), ctx.currentTime);
+      },
+      setChorus(depthCents, rateHz){
+        chorusLFO.frequency.setValueAtTime(rateHz, ctx.currentTime);
+        chorusDepth.gain.setValueAtTime(depthCents, ctx.currentTime);
       }
     };
   }
 
-  function play(midi, tag){
-    ensureAudio();
-    const transposed = midi + settings.transpose + settings.root;
-    const freq = mtof(transposed);
+  // Global audio setup (with soft limiter)
+  function initAudio(){
+    if (state.ctx) return;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    state.ctx = ctx;
+
+    const master = ctx.createGain(); master.gain.value = Number(document.getElementById('gain').value);
+    const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+    const lpf = ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=8000;
+
+    // Simple limiter: fast compressor + soft clipper
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -10; comp.knee.value = 20; comp.ratio.value = 12; comp.attack.value = 0.002; comp.release.value = 0.1;
+
+    master.connect(comp).connect(lpf).connect(analyser).connect(ctx.destination);
+
+    state.master = master;
+    state.analyser = analyser;
+    state.lpf = lpf;
+
+    animateVU();
+  }
+
+  function animateVU(){
+    const el = document.getElementById('vu');
+    const analyser = state.analyser; if(!analyser) return;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    function loop(){
+      analyser.getByteFrequencyData(data);
+      let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
+      const level = Math.min(100, (sum/data.length)); // 0..100
+      el.style.width = level + '%';
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Keyboard layout ----------
+  const layout = [
+    // Lower row (starting around C)
+    {key:'z', n:0},{key:'s', n:1},{key:'x', n:2},{key:'d', n:3},{key:'c', n:4},{key:'v', n:5},{key:'g', n:6},{key:'b', n:7},{key:'h', n:8},{key:'n', n:9},{key:'j', n:10},{key:'m', n:11},
+    // Upper row (next octave)
+    {key:'q', n:12},{key:'2', n:13},{key:'w', n:14},{key:'3', n:15},{key:'e', n:16},{key:'r', n:17},{key:'5', n:18},{key:'t', n:19},{key:'6', n:20},{key:'y', n:21},{key:'7', n:22},{key:'u', n:23},
+  ];
+  const keyToN = new Map(layout.map(x=>[x.key,x.n]));
+
+  function nToMidi(n){ return (state.octave*12) + 60 + (n-12); } // center around C of selected octave
+  function keyIsBlack(semi){ return [1,3,6,8,10].includes(((semi%12)+12)%12); }
+
+  // ---------- UI keyboard ----------
+  const piano = document.getElementById('piano');
+  (function buildKeys(){
+    for (let i=0;i<24;i++){
+      const isBlack = keyIsBlack(i);
+      const div = document.createElement('div');
+      div.className = 'key ' + (isBlack?'black':'white');
+      div.dataset.index = i;
+      const label = document.createElement('span'); label.textContent = i<12 ? layout[i].key.toUpperCase() : layout[i].key.toUpperCase();
+      div.appendChild(label);
+      piano.appendChild(div);
+      div.addEventListener('mousedown', ()=> noteOnIndex(i));
+      div.addEventListener('mouseup',   ()=> noteOffIndex(i));
+      div.addEventListener('mouseleave',()=> noteOffIndex(i));
+    }
+  })();
+
+  function setKeyVisual(i,on){
+    const el = piano.children[i];
+    if(el) el.classList.toggle('on', !!on);
+    const hint = document.querySelector(`.hint .kbd:nth-child(${i+2})`);
+    if (hint) hint.classList.toggle('on', !!on);
+  }
+
+  // ---------- Note handling ----------
+  function noteOnIndex(i, velocity=1){
+    initAudio();
+    const midi = nToMidi(i);
+    const freq = midiToFreq(midi);
+    if (state.active.has(i)) return; // no retrigger while held
     const v = makeVoice(freq);
-    held.set(tag, v);
-    markKey(tag, true);
+    v.setBrightness(Number(document.getElementById('lpf').value));
+    v.setVib(Number(document.getElementById('vibDepth').value), Number(document.getElementById('vibRate').value));
+    v.setChorus(Number(document.getElementById('chorusDepth').value), Number(document.getElementById('chorusRate').value));
+    state.active.set(i, v);
+    setKeyVisual(i,true);
   }
-  function release(tag){
-    const v = held.get(tag);
-    if (!v) return;
-    if (sustain) { sustained.add(tag); return; }
-    v.stop();
-    held.delete(tag);
-    markKey(tag, false);
+  function noteOffIndex(i){
+    if (!state.active.has(i)) return;
+    if (state.sustain) return; // keep it ringing
+    const v = state.active.get(i); v.stop(35);
+    state.active.delete(i);
+    setKeyVisual(i,false);
   }
-  function allNotesOff(){
-    held.forEach(v => v.stop());
-    held.clear();
-    sustained.clear();
-    document.querySelectorAll('.key').forEach(el=>el.classList.remove('playing'));
-  }
-
-  // ---------- BUILD ONE-LINE KEYBOARD ----------
-  const keysEl = document.getElementById('keys');
-  function buildKeyboard(){
-    const startMidi = BASE_MIDI;   // C4
-    const count = 25;              // ~2 octaves
-    const W = 50;                  // white width
-    const B = 32;                  // black width
-
-    keysEl.innerHTML = '';
-    keysEl.style.position = 'relative';
-    keysEl.style.display = 'inline-block';
-    keysEl.style.whiteSpace = 'nowrap';
-    keysEl.style.overflowX = 'auto';
-
-    const whitePos = new Map();
-    // 1) lay out whites
-    let x = 0;
-    for (let i=0;i<count;i++){
-      const midi = startMidi + i;
-      const n = midi % 12;
-      if ([1,3,6,8,10].includes(n)) continue; // skip blacks here
-
-      const noteName = NOTE_NAMES[n] + Math.floor(midi/12 - 1);
-      const w = document.createElement('div');
-      w.className = 'key white'; w.dataset.midi = midi;
-      const letter = labelForMidi(midi);
-      w.innerHTML = `<kbd>${noteName}<br><strong style="font-size:13px;color:#111">${letter}</strong></kbd>`;
-
-      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
-      const end   = () => release('mouse:'+midi);
-      w.addEventListener('mousedown', start);
-      w.addEventListener('mouseup', end);
-      w.addEventListener('mouseleave', end);
-      w.addEventListener('touchstart', start, {passive:false});
-      w.addEventListener('touchend', end);
-
-      w.style.left = x+'px';
-      keysEl.appendChild(w);
-      whitePos.set(midi, x);
-      x += W;
-    }
-
-    const leftWhiteForBlack = {1:0, 3:2, 6:5, 8:7, 10:9}; // C#,D#,F#,G#,A# anchors
-
-    // 2) lay out blacks between whites
-    for (let i=0;i<count;i++){
-      const midi = startMidi + i;
-      const n = midi % 12;
-      if (![1,3,6,8,10].includes(n)) continue;
-
-      const octaveStart = startMidi + Math.floor((midi - startMidi)/12)*12;
-      const leftWhiteMidi = octaveStart + leftWhiteForBlack[n];
-      if (!whitePos.has(leftWhiteMidi)) continue; // edge of range
-
-      const leftX = whitePos.get(leftWhiteMidi);
-      const bx = leftX + Math.round(W*0.66) - Math.round(B/2);
-
-      const noteName = NOTE_NAMES[n] + Math.floor(midi/12 - 1);
-      const b = document.createElement('div');
-      b.className = 'key black'; b.dataset.midi = midi;
-      const letter = labelForMidi(midi);
-      b.innerHTML = `<kbd style="color:#fff">${noteName}<br><strong style="font-size:13px;color:#fff">${letter}</strong></kbd>`;
-      b.style.left = bx+'px'; b.style.top = '0px';
-
-      const start = ev => { ev.preventDefault(); play(midi, 'mouse:'+midi); };
-      const end   = () => release('mouse:'+midi);
-      b.addEventListener('mousedown', start);
-      b.addEventListener('mouseup', end);
-      b.addEventListener('mouseleave', end);
-      b.addEventListener('touchstart', start, {passive:false});
-      b.addEventListener('touchend', end);
-
-      keysEl.appendChild(b);
-    }
+  function allOff(){
+    for (const [i,v] of state.active){ try{ v.stop(20);}catch(e){} setKeyVisual(i,false); }
+    state.active.clear();
   }
 
-  function markKey(tag, on){
-    const el = findKeyEl(tag);
-    if (el){ el.classList.toggle('playing', !!on); }
-  }
-  function findKeyEl(tag){
-    if (tag.startsWith('mouse:')) {
-      const midi = +tag.split(':')[1];
-      return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
-    } else if (tag.startsWith('key:')) {
-      const code = tag.slice(4);
-      const map = keyByCode(code);
-      if (!map) return null;
-      const midi = BASE_MIDI + map.n;
-      return [...document.querySelectorAll('.key')].find(k => +k.dataset.midi===midi);
-    }
-    return null;
+  // Drones (Sa + Pa) from current octave C as example; adjust for different root if you like
+  function toggleDrone(on){
+    if(!state.ctx) initAudio();
+    // stop existing
+    state.drones.forEach(d=>d.stop(50));
+    state.drones = [];
+    if (!on) return;
+    const sa = makeVoice(midiToFreq(nToMidi(0)));   // base (C)
+    const pa = makeVoice(midiToFreq(nToMidi(7)));   // fifth (G)
+    state.drones = [sa, pa];
   }
 
-  // ---------- KEYBOARD HANDLERS ----------
-  const down = new Set();
+  // ---------- Computer keyboard I/O ----------
+  const downHandler = (e)=>{
+    const k = e.key.toLowerCase();
 
-  window.addEventListener('keydown', e => {
-    if (e.code === 'Escape') { allNotesOff(); return; } // panic via ESC
-    if (e.repeat) return;
+    if (k === ' '){ e.preventDefault(); state.sustain = !state.sustain; document.getElementById('sustainBtn').setAttribute('aria-pressed', String(state.sustain)); return; }
+    if (k === '['){ state.octave = Math.max(1, state.octave-1); document.getElementById('octave').textContent = 'Octave: '+state.octave; return; }
+    if (k === ']'){ state.octave = Math.min(7, state.octave+1); document.getElementById('octave').textContent = 'Octave: '+state.octave; return; }
+    if (k === '1'){ const btn = document.getElementById('droneBtn'); const on = btn.getAttribute('aria-pressed')!=='true'; btn.setAttribute('aria-pressed', String(on)); toggleDrone(on); return; }
+    if (k === '0'){ allOff(); toggleDrone(false); document.getElementById('droneBtn').setAttribute('aria-pressed','false'); return; }
 
-    if (e.key === 'Shift') { sustain = true; e.preventDefault(); return; }
-    if (e.code === 'Digit1') { toggleDrone('sa'); return; }
-    if (e.code === 'Digit2') { toggleDrone('pa'); return; }
-
-    const m = keyByCode(e.code);
-    if (m) {
-      if (down.has(e.code)) return;
-      down.add(e.code);
-      play(BASE_MIDI + m.n, 'key:'+e.code);
-      e.preventDefault();
-    }
-  });
-
-  window.addEventListener('keyup', e => {
-    if (e.key === 'Shift') {
-      sustain = false;
-      sustained.forEach(tag => { const v = held.get(tag); if (v){ v.stop(); held.delete(tag); markKey(tag,false); } });
-      sustained.clear();
-      return;
-    }
-    const m = keyByCode(e.code);
-    if (m) {
-      down.delete(e.code);
-      release('key:'+e.code);
-    }
-  });
-
-  window.addEventListener('blur', allNotesOff);
-  document.getElementById('panicBtn').addEventListener('click', allNotesOff);
-
-  // ---------- Drones ----------
-  function playDrone(which, on){
-    ensureAudio();
-    const rootMidi = BASE_MIDI + settings.root;
-    const midi = which==='sa' ? rootMidi : rootMidi + 7;
-    const freq = mtof(midi);
-    if (on){
-      const v = makeVoice(freq);
-      v.node.gain.setTargetAtTime(0.7, audio.currentTime, 0.05);
-      held.set('drone:'+which, v);
-    } else {
-      const v = held.get('drone:'+which);
-      if (v){ v.stop(0.2); held.delete('drone:'+which); }
-    }
-  }
-  function toggleDrone(which){
-    drones[which] = !drones[which];
-    playDrone(which, drones[which]);
-  }
+    if (state.held.has(k)) return;
+    const n = keyToN.get(k);
+    if (n !== undefined){ state.held.add(k); noteOnIndex(n); }
+  };
+  const upHandler = (e)=>{
+    const k = e.key.toLowerCase();
+    state.held.delete(k);
+    const n = keyToN.get(k);
+    if (n !== undefined) noteOffIndex(n);
+  };
+  window.addEventListener('keydown', downHandler);
+  window.addEventListener('keyup', upHandler);
 
   // ---------- Controls ----------
-  function link(id, handler){
-    const el = document.getElementById(id);
-    handler(el);
-    el.addEventListener('input', () => handler(el));
-  }
-  link('root', el => { settings.root = +el.value; });
-  link('transpose', el => { settings.transpose = +el.value; });
-  link('brightness', el => { settings.brightness = +el.value; if (filter) filter.frequency.value = settings.brightness; });
-  link('chorus', el => { settings.chorus = +el.value; if (chorusDepthGain) chorusDepthGain.gain.value = settings.chorus * 0.006; });
-  link('tremAmt', el => {
-    settings.tremAmt = +el.value;
-    if (tremDepthGain) tremDepthGain.gain.value = settings.tremAmt;
-    if (outGain) outGain.gain.value = settings.volume * (0.95 + 0.05*(1-settings.tremAmt));
+  document.getElementById('start').addEventListener('click', ()=>initAudio());
+  document.getElementById('gain').addEventListener('input', e=>{ if(state.master){ state.master.gain.value = Number(e.target.value); }});
+  document.getElementById('lpf').addEventListener('input', e=>{
+    for (const [,v] of state.active) v.setBrightness(Number(e.target.value));
   });
-  link('volume', el => { settings.volume = +el.value; if (outGain) outGain.gain.value = settings.volume; });
+  document.getElementById('vibDepth').addEventListener('input', e=>{
+    for (const [,v] of state.active) v.setVib(Number(e.target.value), Number(document.getElementById('vibRate').value));
+  });
+  document.getElementById('vibRate').addEventListener('input', e=>{
+    for (const [,v] of state.active) v.setVib(Number(document.getElementById('vibDepth').value), Number(e.target.value));
+  });
+  document.getElementById('chorusDepth').addEventListener('input', e=>{
+    for (const [,v] of state.active) v.setChorus(Number(e.target.value), Number(document.getElementById('chorusRate').value));
+  });
+  document.getElementById('chorusRate').addEventListener('input', e=>{
+    for (const [,v] of state.active) v.setChorus(Number(document.getElementById('chorusDepth').value), Number(e.target.value));
+  });
+  document.getElementById('octDown').addEventListener('click', ()=>{ state.octave=Math.max(1,state.octave-1); document.getElementById('octave').textContent='Octave: '+state.octave;});
+  document.getElementById('octUp').addEventListener('click', ()=>{ state.octave=Math.min(7,state.octave+1); document.getElementById('octave').textContent='Octave: '+state.octave;});
+  document.getElementById('sustainBtn').addEventListener('click', (e)=>{ state.sustain = !state.sustain; e.currentTarget.setAttribute('aria-pressed', String(state.sustain));});
+  document.getElementById('droneBtn').addEventListener('click', (e)=>{ const on = e.currentTarget.getAttribute('aria-pressed')!=='true'; e.currentTarget.setAttribute('aria-pressed', String(on)); toggleDrone(on); });
+  document.getElementById('panicBtn').addEventListener('click', ()=>{ allOff(); toggleDrone(false); document.getElementById('droneBtn').setAttribute('aria-pressed','false'); });
 
-  // Recording buttons
-  let mediaRecChunks = []; // keep only here — DO NOT redeclare mediaRec
-  document.getElementById('recordBtn').addEventListener('click', () => {
-    ensureAudio();
-    if (!mediaRec) return;
-    if (mediaRec.state === 'recording') {
-      mediaRec.stop();
-      document.getElementById('recordBtn').textContent = '⏺️ Record (WEBM)';
-      document.getElementById('recStatus').textContent = 'Processing…';
-    } else {
-      mediaRecChunks = [];
-      try { mediaRec.start(); } catch {}
-      document.getElementById('recordBtn').textContent = '⏹️ Stop';
-      document.getElementById('recStatus').textContent = 'Recording… play with keys!';
-    }
-  });
-  document.getElementById('clearRecBtn').addEventListener('click', () => {
-    document.getElementById('recStatus').textContent = 'Not recording.';
-  });
-
-  // Build UI and arm audio on first gesture
-  buildKeyboard();
-  window.addEventListener('pointerdown', ensureAudio, { once:true });
-  document.body.addEventListener('click', ensureAudio, { once: true });
+  // Show initial octave
+  document.getElementById('octave').textContent = 'Octave: ' + state.octave;
 })();
 </script>
+</body>
+</html>
