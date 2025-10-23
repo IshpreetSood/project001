@@ -3,25 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Virtual Harmonium – Laptop Keys</title>
+<title>Virtual Harmonium – Real Layout</title>
 <style>
   :root {
     --bg:#0f1115; --panel:#161923; --ink:#e8ecf1; --muted:#9aa4b2; --accent:#46d3a7;
-    --warn:#fdbc5b; --key:#23283a; --key-on:#3a4161; --white:#e6e6e6; --black:#1a1a1a;
+    --key:#23283a; --key-on:#3a4161;
   }
-  *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
-  body{margin:0;background:linear-gradient(180deg,#0c0f14,#10131a);color:var(--ink);}
+  body{margin:0;background:linear-gradient(180deg,#0c0f14,#10131a);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
   header{padding:18px 22px;border-bottom:1px solid #222838;background:#0e1219;position:sticky;top:0;z-index:2}
-  h1{margin:0;font-weight:700;font-size:18px;letter-spacing:.3px}
+  h1{margin:0;font-weight:700;font-size:18px}
   .wrap{max-width:980px;margin:18px auto;padding:0 16px 40px}
   .row{display:flex;gap:16px;flex-wrap:wrap}
   .card{background:var(--panel);border:1px solid #23283a;border-radius:12px;padding:14px 16px;flex:1}
-  .kbd{display:inline-block;border:1px solid #2d3350;border-bottom-width:3px;border-radius:8px;padding:6px 8px;margin:0 2px;background:var(--key);color:#cfd6e6;min-width:26px;text-align:center;font-weight:600}
-  .kbd.on{background:var(--key-on);color:#fff;border-color:#495289}
   .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  button, input[type=range]{
-    -webkit-tap-highlight-color:transparent
-  }
   button{
     background:#1b2133;border:1px solid #2a324f;color:var(--ink);
     padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer
@@ -29,20 +23,28 @@
   button.toggle[aria-pressed="true"]{background:var(--accent);border-color:#7df1ce;color:#0c1413}
   button.small{font-size:13px;padding:6px 9px}
   label{font-size:12px;color:var(--muted)}
-  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:10px}
-  .key{height:120px;border-radius:8px;position:relative;user-select:none}
-  .key.white{background:var(--white);border:1px solid #d6d6d6;color:#333}
-  .key.black{background:linear-gradient(#111,#222);height:80px;margin:0 -10px;z-index:1;border:1px solid #000;color:#eee}
-  .key span{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-weight:700;font-size:12px;opacity:.85}
-  .key.on{outline:3px solid var(--accent);box-shadow:0 0 18px rgba(70,211,167,.6) inset}
-  .meter{height:10px;background:#1b2133;border-radius:6px;overflow:hidden;border:1px solid #2a324f;margin-top:8px}
-  .meter > div{height:100%;width:0;background:linear-gradient(90deg,#46d3a7,#84f1d2)}
   footer{opacity:.8;text-align:center;margin-top:10px;font-size:12px;color:#9aa4b2}
   .hint{font-size:13px;color:#b9c2d1}
+  .meter{height:10px;background:#1b2133;border-radius:6px;overflow:hidden;border:1px solid #2a324f;margin-top:8px}
+  .meter > div{height:100%;width:0;background:linear-gradient(90deg,#46d3a7,#84f1d2)}
+
+  /* --- Real harmonium layout --- */
+  .kb{ position:relative; width:700px; max-width:100%; height:180px; margin-top:14px; margin-bottom:10px; }
+  .kb .white{
+    position:absolute; bottom:0; width:56px; height:160px;
+    background:#fff; border:1px solid #cfcfcf; border-radius:0 0 8px 8px;
+    display:flex; align-items:flex-end; justify-content:center; color:#333; font-weight:700;
+  }
+  .kb .black{
+    position:absolute; top:0; width:36px; height:104px;
+    background:linear-gradient(#111,#222); border:1px solid #000; border-radius:0 0 6px 6px;
+    z-index:2; display:flex; align-items:flex-end; justify-content:center; color:#f0f0f0; font-weight:700;
+  }
+  .kb .on{ outline:3px solid var(--accent); box-shadow:0 0 18px rgba(70,211,167,.6) inset; }
 </style>
 </head>
 <body>
-<header><h1>🎹 Virtual Harmonium (Laptop Keys)</h1></header>
+<header><h1>🎹 Virtual Harmonium (Real Layout)</h1></header>
 <div class="wrap">
   <div class="row">
     <div class="card" style="flex:2">
@@ -55,12 +57,11 @@
         <button id="droneBtn" class="toggle" aria-pressed="false">1: Drone (Sa + Pa)</button>
         <button id="panicBtn" class="small" title="Stop all sound (0 key)">0: Panic</button>
       </div>
-      <div style="margin-top:8px" class="hint">
-        Row 1: <span class="kbd">Z</span> <span class="kbd">S</span> <span class="kbd">X</span> <span class="kbd">D</span> <span class="kbd">C</span> <span class="kbd">V</span> <span class="kbd">G</span> <span class="kbd">B</span> <span class="kbd">H</span> <span class="kbd">N</span> <span class="kbd">J</span> <span class="kbd">M</span>
-        &nbsp;&nbsp; Row 2: <span class="kbd">Q</span> <span class="kbd">2</span> <span class="kbd">W</span> <span class="kbd">3</span> <span class="kbd">E</span> <span class="kbd">R</span> <span class="kbd">5</span> <span class="kbd">T</span> <span class="kbd">6</span> <span class="kbd">Y</span> <span class="kbd">7</span> <span class="kbd">U</span>
+      <div class="hint" style="margin-top:8px">
+        White keys: Z X C V B N M , . / &nbsp; | &nbsp; Black keys: S D G H J
       </div>
 
-      <div id="piano" class="grid" aria-label="keyboard"></div>
+      <div id="kb" class="kb" aria-label="keyboard"></div>
       <div class="meter"><div id="vu"></div></div>
       <div class="hint">Tip: Harmonium is a free-reed instrument with a steady tone. Use the “Chorus” & “Vibrato” below to taste.</div>
     </div>
@@ -84,270 +85,161 @@
 <script>
 (() => {
   // ---------- Audio engine ----------
-  const state = {
-    ctx: null,
-    master: null,
-    limiter: null,
-    analyser: null,
-    lpf: null,
-    sustain: false,
-    octave: 3,
-    active: new Map(), // key -> voice
-    held: new Set(),   // physical keys down
-    drones: [],
-  };
+  const state = { ctx:null, master:null, analyser:null, sustain:false, octave:3, active:new Map(), held:new Set(), drones:[] };
+  function midiToFreq(m){return 440*Math.pow(2,(m-69)/12)}
 
-  // Equal-tempered tuning; A4=440
-  function midiToFreq(m){return 440 * Math.pow(2,(m-69)/12)}
-
-  // A harmonium-like voice: bandlimited brightness + gentle formant + slight detune & chorus
   function makeVoice(freq){
     const ctx = state.ctx;
-
-    // Gain envelope
-    const amp = ctx.createGain(); amp.gain.value = 0;
-    // Gentle low-pass as brightness control
-    const lpf = ctx.createBiquadFilter(); lpf.type = "lowpass"; lpf.frequency.value = Number(document.getElementById('lpf').value); lpf.Q.value = 0.7;
-    // Mild resonance to mimic reed body
-    const formant = ctx.createBiquadFilter(); formant.type="bandpass"; formant.frequency.value = freq*2; formant.Q.value=4;
-
-    // Primary sources: pulses (band-limited)
+    const amp = ctx.createGain(); amp.gain.value=0;
+    const lpf = ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=Number(lpfSlider.value); lpf.Q.value=0.7;
+    const formant = ctx.createBiquadFilter(); formant.type="bandpass"; formant.frequency.value=freq*2; formant.Q.value=4;
     const osc1 = ctx.createOscillator(); osc1.type="sawtooth"; osc1.frequency.value=freq*0.999;
     const osc2 = ctx.createOscillator(); osc2.type="square";   osc2.frequency.value=freq*1.001;
 
-    // Tiny detune for chorusing
-    const chorusLFO = ctx.createOscillator(); chorusLFO.frequency.value = Number(document.getElementById('chorusRate').value);
-    const chorusDepth = ctx.createGain(); chorusDepth.gain.value = Number(document.getElementById('chorusDepth').value); // cents
-    // Convert cents -> Hz modulation roughly: Δf ≈ f*(2^(c/1200)-1) ~ f * ln(2)*c/1200 for small c
-    const centsToHz = c => freq*(Math.pow(2,c/1200)-1);
-    const depthHz = ctx.createGain(); depthHz.gain.value = centsToHz(1); // scale to 1 cent, then multiply
-    chorusLFO.connect(chorusDepth).connect(depthHz);
-    depthHz.connect(osc1.frequency);
-    depthHz.connect(osc2.frequency);
+    const chorusLFO = ctx.createOscillator(); chorusLFO.frequency.value=Number(chorusRate.value);
+    const chorusDepthGain = ctx.createGain(); chorusDepthGain.gain.value=freq*(Math.pow(2,Number(chorusDepth.value)/1200)-1);
+    chorusLFO.connect(chorusDepthGain);
+    chorusDepthGain.connect(osc1.frequency);
+    chorusDepthGain.connect(osc2.frequency);
 
-    // Vibrato (musical)
-    const vibLFO = ctx.createOscillator(); vibLFO.frequency.value = Number(document.getElementById('vibRate').value);
-    const vibDepth = ctx.createGain(); vibDepth.gain.value = centsToHz(Number(document.getElementById('vibDepth').value));
-    vibLFO.connect(vibDepth);
-    vibDepth.connect(osc1.frequency);
-    vibDepth.connect(osc2.frequency);
+    const vibLFO = ctx.createOscillator(); vibLFO.frequency.value=Number(vibRate.value);
+    const vibDepthGain = ctx.createGain(); vibDepthGain.gain.value=freq*(Math.pow(2,Number(vibDepth.value)/1200)-1);
+    vibLFO.connect(vibDepthGain);
+    vibDepthGain.connect(osc1.frequency);
+    vibDepthGain.connect(osc2.frequency);
 
-    // Key click (short noise burst)
-    const clickAmt = Number(document.getElementById('clickAmt').value);
-    let clickSrc = null, clickGain = null;
-    if (clickAmt > 0){
-      const buffer = ctx.createBuffer(1, ctx.sampleRate*0.03, ctx.sampleRate);
-      const d = buffer.getChannelData(0);
-      for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*Math.exp(-i/(d.length*0.55)); }
-      clickSrc = ctx.createBufferSource(); clickSrc.buffer = buffer;
-      clickGain = ctx.createGain(); clickGain.gain.value = clickAmt;
-      clickSrc.connect(clickGain).connect(lpf);
-    }
-
-    // Wire up chain
     osc1.connect(formant);
     osc2.connect(formant);
     formant.connect(lpf);
     lpf.connect(amp);
-    if(clickSrc) clickSrc.start();
+    amp.connect(state.master);
 
-    osc1.start(); osc2.start(); chorusLFO.start(); vibLFO.start();
-
-    // Envelope
     const now = ctx.currentTime;
-    const atk = Number(document.getElementById('attack').value)/1000;
-    amp.gain.cancelScheduledValues(now);
+    const atk = Number(attack.value)/1000;
     amp.gain.setValueAtTime(0, now);
     amp.gain.linearRampToValueAtTime(1, now+atk);
 
-    // Output to master
-    amp.connect(state.master);
+    osc1.start(); osc2.start(); chorusLFO.start(); vibLFO.start();
 
-    const stop = (releaseMs=20) => {
+    const stop = (releaseMs=30)=>{
       const t = ctx.currentTime;
-      amp.gain.cancelScheduledValues(t);
       amp.gain.setTargetAtTime(0, t, releaseMs/1000);
       setTimeout(()=>{
-        try{
-          osc1.stop(); osc2.stop(); chorusLFO.stop(); vibLFO.stop();
-          amp.disconnect(); lpf.disconnect(); formant.disconnect();
-        }catch(e){}
-      }, releaseMs+120);
+        osc1.stop(); osc2.stop(); chorusLFO.stop(); vibLFO.stop();
+      }, releaseMs+100);
     };
-
-    return {
-      freq, amp, lpf, stop,
-      setBrightness(v){ lpf.frequency.setTargetAtTime(v, ctx.currentTime, 0.02); },
-      setVib(depthCents, rateHz){
-        vibLFO.frequency.setValueAtTime(rateHz, ctx.currentTime);
-        vibDepth.gain.setValueAtTime(freq*(Math.pow(2,depthCents/1200)-1), ctx.currentTime);
-      },
-      setChorus(depthCents, rateHz){
-        chorusLFO.frequency.setValueAtTime(rateHz, ctx.currentTime);
-        chorusDepth.gain.setValueAtTime(depthCents, ctx.currentTime);
-      }
-    };
+    return {freq,amp,stop,setBrightness(v){lpf.frequency.setTargetAtTime(v,ctx.currentTime,0.02)}};
   }
 
-  // Global audio setup (with soft limiter)
   function initAudio(){
     if (state.ctx) return;
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    state.ctx = ctx;
-
-    const master = ctx.createGain(); master.gain.value = Number(document.getElementById('gain').value);
-    const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
-    const lpf = ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=8000;
-
-    // Simple limiter: fast compressor + soft clipper
-    const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -10; comp.knee.value = 20; comp.ratio.value = 12; comp.attack.value = 0.002; comp.release.value = 0.1;
-
-    master.connect(comp).connect(lpf).connect(analyser).connect(ctx.destination);
-
-    state.master = master;
-    state.analyser = analyser;
-    state.lpf = lpf;
-
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const master=ctx.createGain(); master.gain.value=Number(gain.value);
+    const analyser=ctx.createAnalyser(); analyser.fftSize=512;
+    master.connect(analyser).connect(ctx.destination);
+    state.ctx=ctx; state.master=master; state.analyser=analyser;
     animateVU();
   }
-
   function animateVU(){
-    const el = document.getElementById('vu');
-    const analyser = state.analyser; if(!analyser) return;
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    function loop(){
-      analyser.getByteFrequencyData(data);
-      let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
-      const level = Math.min(100, (sum/data.length)); // 0..100
-      el.style.width = level + '%';
-      requestAnimationFrame(loop);
-    }
+    const data=new Uint8Array(state.analyser.frequencyBinCount); const vu=document.getElementById('vu');
+    function loop(){state.analyser.getByteFrequencyData(data); let s=0;for(const x of data)s+=x;vu.style.width=Math.min(100,(s/data.length))+'%';requestAnimationFrame(loop);}
     requestAnimationFrame(loop);
   }
 
-  // ---------- Keyboard layout ----------
-  const layout = [
-    // Lower row (starting around C)
-    {key:'z', n:0},{key:'s', n:1},{key:'x', n:2},{key:'d', n:3},{key:'c', n:4},{key:'v', n:5},{key:'g', n:6},{key:'b', n:7},{key:'h', n:8},{key:'n', n:9},{key:'j', n:10},{key:'m', n:11},
-    // Upper row (next octave)
-    {key:'q', n:12},{key:'2', n:13},{key:'w', n:14},{key:'3', n:15},{key:'e', n:16},{key:'r', n:17},{key:'5', n:18},{key:'t', n:19},{key:'6', n:20},{key:'y', n:21},{key:'7', n:22},{key:'u', n:23},
-  ];
-  const keyToN = new Map(layout.map(x=>[x.key,x.n]));
+  // ---------- Real keyboard layout ----------
+  const kb=document.getElementById('kb');
+  const WHITE_KEYS=['z','x','c','v','b','n','m',',','.','/'];
+  const BLACK_KEYS={0:'s',1:'d',3:'g',4:'h',5:'j'};
+  const WHITE_TO_SEMI=[0,2,4,5,7,9,11,12,14,16];
+  const BLACK_POS_TO_SEMI={0:1,1:3,3:6,4:8,5:10};
+  const keyToSemi=new Map();
 
-  function nToMidi(n){ return (state.octave*12) + 60 + (n-12); } // center around C of selected octave
-  function keyIsBlack(semi){ return [1,3,6,8,10].includes(((semi%12)+12)%12); }
-
-  // ---------- UI keyboard ----------
-  const piano = document.getElementById('piano');
   (function buildKeys(){
-    for (let i=0;i<24;i++){
-      const isBlack = keyIsBlack(i);
-      const div = document.createElement('div');
-      div.className = 'key ' + (isBlack?'black':'white');
-      div.dataset.index = i;
-      const label = document.createElement('span'); label.textContent = i<12 ? layout[i].key.toUpperCase() : layout[i].key.toUpperCase();
-      div.appendChild(label);
-      piano.appendChild(div);
-      div.addEventListener('mousedown', ()=> noteOnIndex(i));
-      div.addEventListener('mouseup',   ()=> noteOffIndex(i));
-      div.addEventListener('mouseleave',()=> noteOffIndex(i));
+    const W=56,BW=36;
+    for(let i=0;i<WHITE_KEYS.length;i++){
+      const el=document.createElement('div');
+      el.className='white'; el.style.left=(i*W)+'px';
+      el.dataset.semi=WHITE_TO_SEMI[i];
+      el.textContent=WHITE_KEYS[i].toUpperCase();
+      kb.appendChild(el);
+      keyToSemi.set(WHITE_KEYS[i],WHITE_TO_SEMI[i]);
+
+      if(BLACK_KEYS[i]){
+        const b=document.createElement('div');
+        b.className='black';
+        b.style.left=(i*W + W - BW/2)+'px';
+        b.dataset.semi=BLACK_POS_TO_SEMI[i];
+        b.textContent=BLACK_KEYS[i].toUpperCase();
+        kb.appendChild(b);
+        keyToSemi.set(BLACK_KEYS[i],BLACK_POS_TO_SEMI[i]);
+      }
     }
+    kb.addEventListener('mousedown',e=>{
+      const k=e.target.closest('.white,.black'); if(!k)return;
+      noteOnSemi(Number(k.dataset.semi)); k.classList.add('on');
+    });
+    kb.addEventListener('mouseup',e=>{
+      const k=e.target.closest('.white,.black'); if(!k)return;
+      noteOffSemi(Number(k.dataset.semi)); k.classList.remove('on');
+    });
   })();
 
-  function setKeyVisual(i,on){
-    const el = piano.children[i];
-    if(el) el.classList.toggle('on', !!on);
-    const hint = document.querySelector(`.hint .kbd:nth-child(${i+2})`);
-    if (hint) hint.classList.toggle('on', !!on);
-  }
-
-  // ---------- Note handling ----------
-  function noteOnIndex(i, velocity=1){
+  function semiToMidi(semi){return (state.octave*12)+60+(semi-12);}
+  function noteOnSemi(semi){
     initAudio();
-    const midi = nToMidi(i);
-    const freq = midiToFreq(midi);
-    if (state.active.has(i)) return; // no retrigger while held
-    const v = makeVoice(freq);
-    v.setBrightness(Number(document.getElementById('lpf').value));
-    v.setVib(Number(document.getElementById('vibDepth').value), Number(document.getElementById('vibRate').value));
-    v.setChorus(Number(document.getElementById('chorusDepth').value), Number(document.getElementById('chorusRate').value));
-    state.active.set(i, v);
-    setKeyVisual(i,true);
+    const midi=semiToMidi(semi); const freq=midiToFreq(midi);
+    if(state.active.has(semi))return;
+    const v=makeVoice(freq);
+    v.setBrightness(Number(lpf.value));
+    state.active.set(semi,v);
+    [...kb.querySelectorAll(`[data-semi="${semi}"]`)].forEach(el=>el.classList.add('on'));
   }
-  function noteOffIndex(i){
-    if (!state.active.has(i)) return;
-    if (state.sustain) return; // keep it ringing
-    const v = state.active.get(i); v.stop(35);
-    state.active.delete(i);
-    setKeyVisual(i,false);
+  function noteOffSemi(semi){
+    if(!state.active.has(semi))return;
+    if(state.sustain)return;
+    const v=state.active.get(semi); v.stop(35);
+    state.active.delete(semi);
+    [...kb.querySelectorAll(`[data-semi="${semi}"]`)].forEach(el=>el.classList.remove('on'));
   }
   function allOff(){
-    for (const [i,v] of state.active){ try{ v.stop(20);}catch(e){} setKeyVisual(i,false); }
+    for(const [semi,v] of state.active){try{v.stop(20);}catch{}}
     state.active.clear();
+    kb.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));
   }
 
-  // Drones (Sa + Pa) from current octave C as example; adjust for different root if you like
   function toggleDrone(on){
-    if(!state.ctx) initAudio();
-    // stop existing
-    state.drones.forEach(d=>d.stop(50));
-    state.drones = [];
-    if (!on) return;
-    const sa = makeVoice(midiToFreq(nToMidi(0)));   // base (C)
-    const pa = makeVoice(midiToFreq(nToMidi(7)));   // fifth (G)
-    state.drones = [sa, pa];
+    if(!state.ctx)initAudio();
+    state.drones.forEach(d=>d.stop(50)); state.drones=[];
+    if(!on)return;
+    const sa=makeVoice(midiToFreq(semiToMidi(0)));
+    const pa=makeVoice(midiToFreq(semiToMidi(7)));
+    state.drones=[sa,pa];
   }
 
-  // ---------- Computer keyboard I/O ----------
-  const downHandler = (e)=>{
-    const k = e.key.toLowerCase();
+  // Keyboard input
+  window.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(k===' '){e.preventDefault();state.sustain=!state.sustain;sustainBtn.setAttribute('aria-pressed',state.sustain);return;}
+    if(k==='['){state.octave=Math.max(1,state.octave-1);octave.textContent='Octave: '+state.octave;return;}
+    if(k===']'){state.octave=Math.min(7,state.octave+1);octave.textContent='Octave: '+state.octave;return;}
+    if(k==='1'){const on=droneBtn.getAttribute('aria-pressed')!=='true';droneBtn.setAttribute('aria-pressed',on);toggleDrone(on);return;}
+    if(k==='0'){allOff();toggleDrone(false);droneBtn.setAttribute('aria-pressed','false');return;}
+    if(keyToSemi.has(k)&&!state.held.has(k)){state.held.add(k);noteOnSemi(keyToSemi.get(k));}
+  });
+  window.addEventListener('keyup',e=>{
+    const k=e.key.toLowerCase();
+    if(keyToSemi.has(k)){state.held.delete(k);noteOffSemi(keyToSemi.get(k));}
+  });
 
-    if (k === ' '){ e.preventDefault(); state.sustain = !state.sustain; document.getElementById('sustainBtn').setAttribute('aria-pressed', String(state.sustain)); return; }
-    if (k === '['){ state.octave = Math.max(1, state.octave-1); document.getElementById('octave').textContent = 'Octave: '+state.octave; return; }
-    if (k === ']'){ state.octave = Math.min(7, state.octave+1); document.getElementById('octave').textContent = 'Octave: '+state.octave; return; }
-    if (k === '1'){ const btn = document.getElementById('droneBtn'); const on = btn.getAttribute('aria-pressed')!=='true'; btn.setAttribute('aria-pressed', String(on)); toggleDrone(on); return; }
-    if (k === '0'){ allOff(); toggleDrone(false); document.getElementById('droneBtn').setAttribute('aria-pressed','false'); return; }
-
-    if (state.held.has(k)) return;
-    const n = keyToN.get(k);
-    if (n !== undefined){ state.held.add(k); noteOnIndex(n); }
-  };
-  const upHandler = (e)=>{
-    const k = e.key.toLowerCase();
-    state.held.delete(k);
-    const n = keyToN.get(k);
-    if (n !== undefined) noteOffIndex(n);
-  };
-  window.addEventListener('keydown', downHandler);
-  window.addEventListener('keyup', upHandler);
-
-  // ---------- Controls ----------
-  document.getElementById('start').addEventListener('click', ()=>initAudio());
-  document.getElementById('gain').addEventListener('input', e=>{ if(state.master){ state.master.gain.value = Number(e.target.value); }});
-  document.getElementById('lpf').addEventListener('input', e=>{
-    for (const [,v] of state.active) v.setBrightness(Number(e.target.value));
-  });
-  document.getElementById('vibDepth').addEventListener('input', e=>{
-    for (const [,v] of state.active) v.setVib(Number(e.target.value), Number(document.getElementById('vibRate').value));
-  });
-  document.getElementById('vibRate').addEventListener('input', e=>{
-    for (const [,v] of state.active) v.setVib(Number(document.getElementById('vibDepth').value), Number(e.target.value));
-  });
-  document.getElementById('chorusDepth').addEventListener('input', e=>{
-    for (const [,v] of state.active) v.setChorus(Number(e.target.value), Number(document.getElementById('chorusRate').value));
-  });
-  document.getElementById('chorusRate').addEventListener('input', e=>{
-    for (const [,v] of state.active) v.setChorus(Number(document.getElementById('chorusDepth').value), Number(e.target.value));
-  });
-  document.getElementById('octDown').addEventListener('click', ()=>{ state.octave=Math.max(1,state.octave-1); document.getElementById('octave').textContent='Octave: '+state.octave;});
-  document.getElementById('octUp').addEventListener('click', ()=>{ state.octave=Math.min(7,state.octave+1); document.getElementById('octave').textContent='Octave: '+state.octave;});
-  document.getElementById('sustainBtn').addEventListener('click', (e)=>{ state.sustain = !state.sustain; e.currentTarget.setAttribute('aria-pressed', String(state.sustain));});
-  document.getElementById('droneBtn').addEventListener('click', (e)=>{ const on = e.currentTarget.getAttribute('aria-pressed')!=='true'; e.currentTarget.setAttribute('aria-pressed', String(on)); toggleDrone(on); });
-  document.getElementById('panicBtn').addEventListener('click', ()=>{ allOff(); toggleDrone(false); document.getElementById('droneBtn').setAttribute('aria-pressed','false'); });
-
-  // Show initial octave
-  document.getElementById('octave').textContent = 'Octave: ' + state.octave;
+  // Controls
+  start.addEventListener('click',()=>initAudio());
+  gain.addEventListener('input',e=>{if(state.master)state.master.gain.value=Number(e.target.value);});
+  lpf.addEventListener('input',e=>{for(const [,v] of state.active)v.setBrightness(Number(e.target.value));});
+  octDown.addEventListener('click',()=>{state.octave=Math.max(1,state.octave-1);octave.textContent='Octave: '+state.octave;});
+  octUp.addEventListener('click',()=>{state.octave=Math.min(7,state.octave+1);octave.textContent='Octave: '+state.octave;});
+  sustainBtn.addEventListener('click',()=>{state.sustain=!state.sustain;sustainBtn.setAttribute('aria-pressed',state.sustain);});
+  droneBtn.addEventListener('click',()=>{const on=droneBtn.getAttribute('aria-pressed')!=='true';droneBtn.setAttribute('aria-pressed',on);toggleDrone(on);});
+  panicBtn.addEventListener('click',()=>{allOff();toggleDrone(false);droneBtn.setAttribute('aria-pressed','false');});
 })();
 </script>
 </body>
