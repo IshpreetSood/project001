@@ -491,6 +491,7 @@
   // Build UI and arm audio on first gesture
   buildKeyboard();
   window.addEventListener('pointerdown', ensureAudio, { once:true });
+  document.body.addEventListener('click', ensureAudio, { once: true });
 })();
 </script>
 </body>
