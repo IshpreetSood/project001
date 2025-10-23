@@ -33,12 +33,12 @@
   .white{
     display:inline-block;
     position:relative;
-    width:50px;            /* change for bigger/smaller keys */
+    width:50px;
     height:180px;
     background:#fafafa;color:#111;
     border:1px solid #cbd5e1;border-bottom-width:4px;border-radius:6px;
     box-shadow:inset 0 -4px 0 #e5e7eb;
-    margin-right:-1px;     /* tight seam */
+    margin-right:-1px;
     vertical-align:bottom;
   }
   .black{
@@ -143,8 +143,8 @@
 
 <script>
 (() => {
-  const NOTE_NAMES = ['C','C#','D','D#','E','F','F','G','G#','A','A#','B'];
-  NOTE_NAMES[6]='F#'; // fix accidental display
+  // Fixed: correct accidental names directly (no post-fix)
+  const NOTE_NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 
   const BASE_MIDI = 60; // C4
 
@@ -469,7 +469,7 @@
   link('volume', el => { settings.volume = +el.value; if (outGain) outGain.gain.value = settings.volume; });
 
   // Recording buttons
-  let mediaRec, mediaRecChunks = [];
+  let mediaRecChunks = []; // <— Fixed: only declare chunks here
   document.getElementById('recordBtn').addEventListener('click', () => {
     ensureAudio();
     if (!mediaRec) return;
